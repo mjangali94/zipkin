@@ -19,7 +19,6 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.UUID;
 import org.junit.Test;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.data.MapEntry.entry;
 import static zipkin2.Span.normalizeTraceId;
@@ -27,468 +26,692 @@ import static zipkin2.TestObjects.BACKEND;
 import static zipkin2.TestObjects.FRONTEND;
 
 public class SpanTest {
-  Span base = Span.newBuilder().traceId("1").id("1").localEndpoint(FRONTEND).build();
-  Span oneOfEach = Span.newBuilder()
-    .traceId("7180c278b62e8f6a216a2aea45d08fc9")
-    .parentId("1")
-    .id("2")
-    .name("get")
-    .kind(Span.Kind.SERVER)
-    .localEndpoint(BACKEND)
-    .remoteEndpoint(FRONTEND)
-    .timestamp(1)
-    .duration(3)
-    .addAnnotation(2, "foo")
-    .putTag("http.path", "/api")
-    .shared(true)
-    .debug(true)
-    .build();
-
-  @Test public void traceIdString() {
-    Span with128BitId = base.toBuilder()
-      .traceId("463ac35c9f6413ad48485a3953bb6124")
-      .name("foo").build();
-
-    assertThat(with128BitId.traceId())
-      .isEqualTo("463ac35c9f6413ad48485a3953bb6124");
-  }
-
-  @Test public void localEndpoint_emptyToNull() {
-    assertThat(base.toBuilder().localEndpoint(Endpoint.newBuilder().build()).localEndpoint)
-      .isNull();
-  }
-
-  @Test public void remoteEndpoint_emptyToNull() {
-    assertThat(base.toBuilder().remoteEndpoint(Endpoint.newBuilder().build()).remoteEndpoint)
-      .isNull();
-  }
-
-  @Test public void localServiceName() {
-    assertThat(base.toBuilder().localEndpoint(null).build().localServiceName())
-      .isNull();
-    assertThat(base.toBuilder().localEndpoint(FRONTEND).build().localServiceName())
-      .isEqualTo(FRONTEND.serviceName);
-  }
-
-  @Test public void remoteServiceName() {
-    assertThat(base.toBuilder().remoteEndpoint(null).build().remoteServiceName())
-      .isNull();
-    assertThat(base.toBuilder().remoteEndpoint(BACKEND).build().remoteServiceName())
-      .isEqualTo(BACKEND.serviceName);
-  }
-
-  @Test public void spanNamesLowercase() {
-    assertThat(base.toBuilder().name("GET").build().name())
-      .isEqualTo("get");
-  }
-
-  @Test public void annotationsSortByTimestamp() {
-    Span span = base.toBuilder()
-      .addAnnotation(2L, "foo")
-      .addAnnotation(1L, "foo")
-      .build();
-
-    // note: annotations don't also have endpoints, as it is implicit to Span.localEndpoint
-    assertThat(span.annotations()).containsExactly(
-      Annotation.create(1L, "foo"),
-      Annotation.create(2L, "foo")
-    );
-  }
-
-  @Test public void annotationsDedupe() {
-    Span span = base.toBuilder()
-      .addAnnotation(2L, "foo")
-      .addAnnotation(2L, "foo")
-      .addAnnotation(1L, "foo")
-      .addAnnotation(2L, "foo")
-      .addAnnotation(3L, "foo")
-      .build();
-
-    assertThat(span.annotations()).containsExactly(
-      Annotation.create(1L, "foo"),
-      Annotation.create(2L, "foo"),
-      Annotation.create(3L, "foo")
-    );
-  }
-
-  @Test public void putTagOverwritesValue() {
-    Span span = base.toBuilder()
-      .putTag("foo", "bar")
-      .putTag("foo", "qux")
-      .build();
-
-    assertThat(span.tags()).containsExactly(
-      entry("foo", "qux")
-    );
-  }
-
-  @Test public void builder_canUnsetParent() {
-    Span withParent = base.toBuilder().parentId("3").build();
-
-    assertThat(withParent.toBuilder().parentId(null).build().parentId())
-      .isNull();
-  }
-
-  @Test public void clone_differentCollections() {
-    Span.Builder builder = base.toBuilder()
-      .addAnnotation(1L, "foo")
-      .putTag("foo", "qux");
-
-    Span.Builder builder2 = builder.clone()
-      .addAnnotation(2L, "foo")
-      .putTag("foo", "bar");
-
-    assertThat(builder.build()).isEqualTo(base.toBuilder()
-      .addAnnotation(1L, "foo")
-      .putTag("foo", "qux")
-      .build()
-    );
-
-    assertThat(builder2.build()).isEqualTo(base.toBuilder()
-      .addAnnotation(1L, "foo")
-      .addAnnotation(2L, "foo")
-      .putTag("foo", "bar")
-      .build()
-    );
-  }
-
-  /** Catches common error when zero is passed instead of null for a timestamp */
-  @Test public void coercesZeroTimestampsToNull() {
-    Span span = base.toBuilder()
-      .timestamp(0L)
-      .duration(0L)
-      .build();
-
-    assertThat(span.timestamp())
-      .isNull();
-    assertThat(span.duration())
-      .isNull();
-  }
-
-  @Test public void canUsePrimitiveOverloads() {
-    Span primitives = base.toBuilder()
-      .timestamp(1L)
-      .duration(1L)
-      .shared(true)
-      .debug(true)
-      .build();
-
-    Span objects = base.toBuilder()
-      .timestamp(Long.valueOf(1L))
-      .duration(Long.valueOf(1L))
-      .shared(Boolean.TRUE)
-      .debug(Boolean.TRUE)
-      .build();
-
-    assertThat(primitives)
-      .isEqualToComparingFieldByField(objects);
-  }
-
-  @Test public void debug_canUnset() {
-    assertThat(base.toBuilder().debug(true).debug(null).build().debug())
-      .isNull();
-  }
-
-  @Test public void debug_canDisable() {
-    assertThat(base.toBuilder().debug(true).debug(false).build().debug())
-      .isFalse();
-  }
-
-  @Test public void shared_canUnset() {
-    assertThat(base.toBuilder().shared(true).shared(null).build().shared())
-      .isNull();
-  }
-
-  @Test public void shared_canDisable() {
-    assertThat(base.toBuilder().shared(true).shared(false).build().shared())
-      .isFalse();
-  }
-
-  @Test public void nullToZeroOrFalse() {
-    Span nulls = base.toBuilder()
-      .timestamp(null)
-      .duration(null)
-      .build();
-
-    Span zeros = base.toBuilder()
-      .timestamp(0L)
-      .duration(0L)
-      .build();
-
-    assertThat(nulls)
-      .isEqualToComparingFieldByField(zeros);
-  }
-
-  @Test public void builder_clear() {
-    assertThat(oneOfEach.toBuilder().clear().traceId("a").id("a").build())
-      .isEqualToComparingFieldByField(Span.newBuilder().traceId("a").id("a").build());
-  }
-
-  @Test public void builder_clone() {
-    Span.Builder builder = oneOfEach.toBuilder();
-    assertThat(builder.clone())
-      .isNotSameAs(builder)
-      .isEqualToComparingFieldByField(builder);
-  }
-
-  @Test public void builder_merge_redundant() {
-    Span merged = oneOfEach.toBuilder().merge(oneOfEach).build();
-
-    assertThat(merged).isEqualToComparingFieldByField(oneOfEach);
-  }
-
-  @Test public void builder_merge_flags() {
-    assertThat(Span.newBuilder().shared(true).merge(base.toBuilder().debug(true).build()).build())
-      .isEqualToComparingFieldByField(base.toBuilder().shared(true).debug(true).build());
-  }
-
-  @Test public void builder_merge_annotations() {
-    Span merged = Span.newBuilder().merge(oneOfEach).build();
-
-    assertThat(merged.annotations).containsExactlyElementsOf(oneOfEach.annotations);
-  }
-
-  @Test public void builder_merge_annotations_concat() {
-    Span merged = Span.newBuilder().addAnnotation(1, "a").addAnnotation(1, "b")
-      .merge(base.toBuilder().addAnnotation(1, "b").addAnnotation(1, "c").build()).build();
-
-    assertThat(merged).isEqualToComparingFieldByField(
-      base.toBuilder().addAnnotation(1, "a").addAnnotation(1, "b").addAnnotation(1, "c").build()
-    );
-  }
-
-  @Test public void builder_merge_tags() {
-    Span merged = Span.newBuilder().merge(oneOfEach).build();
-
-    assertThat(merged.tags).containsAllEntriesOf(oneOfEach.tags);
-  }
-
-  @Test public void builder_merge_tags_concat() {
-    Span merged = Span.newBuilder().putTag("1", "a").putTag("2", "a")
-      .merge(base.toBuilder().putTag("2", "a").putTag("3", "a").build()).build();
-
-    assertThat(merged).isEqualToComparingFieldByField(
-      base.toBuilder().putTag("1", "a").putTag("2", "a").putTag("3", "a").build()
-    );
-  }
-
-  @Test public void builder_merge_localEndpoint() {
-    Span merged = Span.newBuilder()
-      .merge(base.toBuilder().localEndpoint(FRONTEND).build()).build();
-
-    assertThat(merged).isEqualToComparingFieldByField(
-      base.toBuilder().localEndpoint(FRONTEND).build()
-    );
-  }
-
-  @Test public void builder_merge_localEndpoint_redundant() {
-    Span merged = Span.newBuilder().localEndpoint(FRONTEND)
-      .merge(base.toBuilder().localEndpoint(FRONTEND).build()).build();
-
-    assertThat(merged).isEqualToComparingFieldByField(
-      base.toBuilder().localEndpoint(FRONTEND).build()
-    );
-  }
-
-  @Test public void builder_merge_localEndpoint_merge() {
-    Span merged = Span.newBuilder().localEndpoint(Endpoint.newBuilder().serviceName("a").build())
-      .merge(
-        base.toBuilder().localEndpoint(Endpoint.newBuilder().ip("192.168.99.101").build()).build())
-      .merge(
-        base.toBuilder().localEndpoint(Endpoint.newBuilder().ip("2001:db8::c001").build()).build())
-      .merge(
-        base.toBuilder().localEndpoint(Endpoint.newBuilder().port(80).build()).build())
-      .build();
-
-    assertThat(merged).isEqualToComparingFieldByField(
-      base.toBuilder().localEndpoint(Endpoint.newBuilder()
-        .serviceName("a")
-        .ip("192.168.99.101")
-        .ip("2001:db8::c001")
-        .port(80)
-        .build()
-      ).build()
-    );
-  }
-
-  @Test public void builder_merge_localEndpoint_null() {
-    Span merged = Span.newBuilder().localEndpoint(FRONTEND)
-      .merge(Span.newBuilder().traceId(base.traceId()).id(base.id()).build()).build();
-
-    assertThat(merged).isEqualToComparingFieldByField(
-      Span.newBuilder().traceId(base.traceId()).id(base.id()).localEndpoint(FRONTEND).build()
-    );
-  }
-
-  @Test public void builder_merge_remoteEndpoint_null() {
-    Span merged = Span.newBuilder().remoteEndpoint(FRONTEND)
-      .merge(Span.newBuilder().traceId(base.traceId()).id(base.id()).build()).build();
-
-    assertThat(merged).isEqualToComparingFieldByField(
-      Span.newBuilder().traceId(base.traceId()).id(base.id()).remoteEndpoint(FRONTEND).build()
-    );
-  }
-
-  @Test public void builder_merge_remoteEndpoint() {
-    Span merged = Span.newBuilder()
-      .merge(base.toBuilder().remoteEndpoint(FRONTEND).build()).build();
-
-    assertThat(merged).isEqualToComparingFieldByField(
-      base.toBuilder().remoteEndpoint(FRONTEND).build()
-    );
-  }
-
-  @Test public void builder_merge_remoteEndpoint_redundant() {
-    Span merged = Span.newBuilder().remoteEndpoint(FRONTEND)
-      .merge(base.toBuilder().remoteEndpoint(FRONTEND).build()).build();
-
-    assertThat(merged).isEqualToComparingFieldByField(
-      base.toBuilder().remoteEndpoint(FRONTEND).build()
-    );
-  }
-
-  @Test public void builder_merge_remoteEndpoint_merge() {
-    Span merged = Span.newBuilder().remoteEndpoint(Endpoint.newBuilder().serviceName("a").build())
-      .merge(
-        base.toBuilder().remoteEndpoint(Endpoint.newBuilder().ip("192.168.99.101").build()).build())
-      .merge(
-        base.toBuilder().remoteEndpoint(Endpoint.newBuilder().ip("2001:db8::c001").build()).build())
-      .merge(
-        base.toBuilder().remoteEndpoint(Endpoint.newBuilder().port(80).build()).build())
-      .build();
-
-    assertThat(merged).isEqualToComparingFieldByField(
-      base.toBuilder().remoteEndpoint(Endpoint.newBuilder()
-        .serviceName("a")
-        .ip("192.168.99.101")
-        .ip("2001:db8::c001")
-        .port(80)
-        .build()
-      ).build()
-    );
-  }
-
-  @Test public void toString_isJson() {
-    assertThat(base.toString()).hasToString(
-      "{\"traceId\":\"0000000000000001\",\"id\":\"0000000000000001\",\"localEndpoint\":{\"serviceName\":\"frontend\",\"ipv4\":\"127.0.0.1\"}}"
-    );
-  }
-
-  /** Test serializable as used in spark jobs. Careful to include all non-standard fields */
-  @Test public void serialization() throws Exception {
-    ByteArrayOutputStream buffer = new ByteArrayOutputStream();
-
-    Span span = base.toBuilder()
-      .addAnnotation(1L, "foo")
-      .build();
-
-    new ObjectOutputStream(buffer).writeObject(span);
-
-    assertThat(new ObjectInputStream(new ByteArrayInputStream(buffer.toByteArray())).readObject())
-      .isEqualTo(span);
-  }
-
-  @Test public void traceIdFromLong() {
-    assertThat(base.toBuilder().traceId(0L, 12345678L).build().traceId())
-      .isEqualTo("0000000000bc614e");
-  }
-
-  @Test public void traceIdFromLong_128() {
-    assertThat(base.toBuilder().traceId(1234L, 5678L).build().traceId())
-      .isEqualTo("00000000000004d2000000000000162e");
-  }
-
-  /** Some tools like rsocket redundantly pass high bits as zero. */
-  @Test public void normalizeTraceId_truncates64BitZeroPrefix() {
-    assertThat(normalizeTraceId("0000000000000000000000000000162e"))
-      .isEqualTo("000000000000162e");
-  }
-
-  @Test public void normalizeTraceId_padsTo64() {
-    assertThat(normalizeTraceId("162e"))
-      .isEqualTo("000000000000162e");
-  }
-
-  @Test public void normalizeTraceId_padsTo128() {
-    assertThat(normalizeTraceId("4d2000000000000162e"))
-      .isEqualTo("00000000000004d2000000000000162e");
-  }
-
-  @Test(expected = IllegalArgumentException.class)
-  public void normalizeTraceId_badCharacters() {
-    normalizeTraceId("000-0000000004d20000000ss000162e");
-  }
-
-  @Test(expected = IllegalArgumentException.class)
-  public void traceIdFromLong_invalid() {
-    base.toBuilder().traceId(0, 0);
-  }
-
-  @Test public void parentIdFromLong() {
-    assertThat(base.toBuilder().parentId(3405691582L).build().parentId())
-      .isEqualTo("00000000cafebabe");
-  }
-
-  @Test public void parentIdFromLong_zeroSameAsNull() {
-    assertThat(base.toBuilder().parentId(0L).build().parentId())
-      .isNull();
-    assertThat(base.toBuilder().parentId("0").build().parentId())
-      .isNull();
-  }
-
-  /** Prevents processing tools from looping */
-  @Test public void parentId_sameAsIdCoerseToNull() {
-    assertThat(base.toBuilder().parentId(base.id).build().parentId())
-      .isNull();
-  }
-
-  @Test public void removesSharedFlagFromClientSpans() {
-    assertThat(base.toBuilder().kind(Span.Kind.CLIENT).build().shared())
-      .isNull();
-  }
-
-  @Test public void idFromLong() {
-    assertThat(base.toBuilder().id(3405691582L).build().id())
-      .isEqualTo("00000000cafebabe");
-  }
-
-  @Test public void idFromLong_minValue() {
-    assertThat(base.toBuilder().id(Long.MAX_VALUE).build().id())
-      .isEqualTo("7fffffffffffffff");
-  }
-
-  @Test(expected = IllegalArgumentException.class)
-  public void idFromLong_invalid() {
-    base.toBuilder().id(0);
-  }
-
-  @Test(expected = IllegalArgumentException.class)
-  public void id_emptyInvalid() {
-    base.toBuilder().id("");
-  }
-
-  @Test(expected = IllegalArgumentException.class)
-  public void id_zerosInvalid() {
-    base.toBuilder().id("0000000000000000");
-  }
-
-  @Test(expected = IllegalArgumentException.class)
-  public void parentId_emptyInvalid() {
-    base.toBuilder().parentId("");
-  }
-
-  @Test(expected = IllegalArgumentException.class)
-  public void traceId_emptyInvalid() {
-    base.toBuilder().traceId("");
-  }
-
-  @Test(expected = IllegalArgumentException.class)
-  public void traceId_zerosInvalid() {
-    base.toBuilder().traceId("0000000000000000");
-  }
-
-  @Test(expected = IllegalArgumentException.class)
-  public void traceId_uuidInvalid() {
-    base.toBuilder().traceId(UUID.randomUUID().toString());
-  }
+
+    Span base = Span.newBuilder().traceId("1").id("1").localEndpoint(FRONTEND).build();
+
+    Span oneOfEach = Span.newBuilder().traceId("7180c278b62e8f6a216a2aea45d08fc9").parentId("1").id("2").name("get").kind(Span.Kind.SERVER).localEndpoint(BACKEND).remoteEndpoint(FRONTEND).timestamp(1).duration(3).addAnnotation(2, "foo").putTag("http.path", "/api").shared(true).debug(true).build();
+
+    @Test
+    public void traceIdString() {
+        Span with128BitId = base.toBuilder().traceId("463ac35c9f6413ad48485a3953bb6124").name("foo").build();
+        assertThat(with128BitId.traceId()).isEqualTo("463ac35c9f6413ad48485a3953bb6124");
+    }
+
+    @Test
+    public void localEndpoint_emptyToNull() {
+        assertThat(base.toBuilder().localEndpoint(Endpoint.newBuilder().build()).localEndpoint).isNull();
+    }
+
+    @Test
+    public void remoteEndpoint_emptyToNull() {
+        assertThat(base.toBuilder().remoteEndpoint(Endpoint.newBuilder().build()).remoteEndpoint).isNull();
+    }
+
+    @Test
+    public void localServiceName() {
+        assertThat(base.toBuilder().localEndpoint(null).build().localServiceName()).isNull();
+        assertThat(base.toBuilder().localEndpoint(FRONTEND).build().localServiceName()).isEqualTo(FRONTEND.serviceName);
+    }
+
+    @Test
+    public void remoteServiceName() {
+        assertThat(base.toBuilder().remoteEndpoint(null).build().remoteServiceName()).isNull();
+        assertThat(base.toBuilder().remoteEndpoint(BACKEND).build().remoteServiceName()).isEqualTo(BACKEND.serviceName);
+    }
+
+    @Test
+    public void spanNamesLowercase() {
+        assertThat(base.toBuilder().name("GET").build().name()).isEqualTo("get");
+    }
+
+    @Test
+    public void annotationsSortByTimestamp() {
+        Span span = base.toBuilder().addAnnotation(2L, "foo").addAnnotation(1L, "foo").build();
+        // note: annotations don't also have endpoints, as it is implicit to Span.localEndpoint
+        assertThat(span.annotations()).containsExactly(Annotation.create(1L, "foo"), Annotation.create(2L, "foo"));
+    }
+
+    @Test
+    public void annotationsDedupe() {
+        Span span = base.toBuilder().addAnnotation(2L, "foo").addAnnotation(2L, "foo").addAnnotation(1L, "foo").addAnnotation(2L, "foo").addAnnotation(3L, "foo").build();
+        assertThat(span.annotations()).containsExactly(Annotation.create(1L, "foo"), Annotation.create(2L, "foo"), Annotation.create(3L, "foo"));
+    }
+
+    @Test
+    public void putTagOverwritesValue() {
+        Span span = base.toBuilder().putTag("foo", "bar").putTag("foo", "qux").build();
+        assertThat(span.tags()).containsExactly(entry("foo", "qux"));
+    }
+
+    @Test
+    public void builder_canUnsetParent() {
+        Span withParent = base.toBuilder().parentId("3").build();
+        assertThat(withParent.toBuilder().parentId(null).build().parentId()).isNull();
+    }
+
+    @Test
+    public void clone_differentCollections() {
+        Span.Builder builder = base.toBuilder().addAnnotation(1L, "foo").putTag("foo", "qux");
+        Span.Builder builder2 = builder.clone().addAnnotation(2L, "foo").putTag("foo", "bar");
+        assertThat(builder.build()).isEqualTo(base.toBuilder().addAnnotation(1L, "foo").putTag("foo", "qux").build());
+        assertThat(builder2.build()).isEqualTo(base.toBuilder().addAnnotation(1L, "foo").addAnnotation(2L, "foo").putTag("foo", "bar").build());
+    }
+
+    /**
+     * Catches common error when zero is passed instead of null for a timestamp
+     */
+    @Test
+    public void coercesZeroTimestampsToNull() {
+        Span span = base.toBuilder().timestamp(0L).duration(0L).build();
+        assertThat(span.timestamp()).isNull();
+        assertThat(span.duration()).isNull();
+    }
+
+    @Test
+    public void canUsePrimitiveOverloads() {
+        Span primitives = base.toBuilder().timestamp(1L).duration(1L).shared(true).debug(true).build();
+        Span objects = base.toBuilder().timestamp(Long.valueOf(1L)).duration(Long.valueOf(1L)).shared(Boolean.TRUE).debug(Boolean.TRUE).build();
+        assertThat(primitives).isEqualToComparingFieldByField(objects);
+    }
+
+    @Test
+    public void debug_canUnset() {
+        assertThat(base.toBuilder().debug(true).debug(null).build().debug()).isNull();
+    }
+
+    @Test
+    public void debug_canDisable() {
+        assertThat(base.toBuilder().debug(true).debug(false).build().debug()).isFalse();
+    }
+
+    @Test
+    public void shared_canUnset() {
+        assertThat(base.toBuilder().shared(true).shared(null).build().shared()).isNull();
+    }
+
+    @Test
+    public void shared_canDisable() {
+        assertThat(base.toBuilder().shared(true).shared(false).build().shared()).isFalse();
+    }
+
+    @Test
+    public void nullToZeroOrFalse() {
+        Span nulls = base.toBuilder().timestamp(null).duration(null).build();
+        Span zeros = base.toBuilder().timestamp(0L).duration(0L).build();
+        assertThat(nulls).isEqualToComparingFieldByField(zeros);
+    }
+
+    @Test
+    public void builder_clear() {
+        assertThat(oneOfEach.toBuilder().clear().traceId("a").id("a").build()).isEqualToComparingFieldByField(Span.newBuilder().traceId("a").id("a").build());
+    }
+
+    @Test
+    public void builder_clone() {
+        Span.Builder builder = oneOfEach.toBuilder();
+        assertThat(builder.clone()).isNotSameAs(builder).isEqualToComparingFieldByField(builder);
+    }
+
+    @Test
+    public void builder_merge_redundant() {
+        Span merged = oneOfEach.toBuilder().merge(oneOfEach).build();
+        assertThat(merged).isEqualToComparingFieldByField(oneOfEach);
+    }
+
+    @Test
+    public void builder_merge_flags() {
+        assertThat(Span.newBuilder().shared(true).merge(base.toBuilder().debug(true).build()).build()).isEqualToComparingFieldByField(base.toBuilder().shared(true).debug(true).build());
+    }
+
+    @Test
+    public void builder_merge_annotations() {
+        Span merged = Span.newBuilder().merge(oneOfEach).build();
+        assertThat(merged.annotations).containsExactlyElementsOf(oneOfEach.annotations);
+    }
+
+    @Test
+    public void builder_merge_annotations_concat() {
+        Span merged = Span.newBuilder().addAnnotation(1, "a").addAnnotation(1, "b").merge(base.toBuilder().addAnnotation(1, "b").addAnnotation(1, "c").build()).build();
+        assertThat(merged).isEqualToComparingFieldByField(base.toBuilder().addAnnotation(1, "a").addAnnotation(1, "b").addAnnotation(1, "c").build());
+    }
+
+    @Test
+    public void builder_merge_tags() {
+        Span merged = Span.newBuilder().merge(oneOfEach).build();
+        assertThat(merged.tags).containsAllEntriesOf(oneOfEach.tags);
+    }
+
+    @Test
+    public void builder_merge_tags_concat() {
+        Span merged = Span.newBuilder().putTag("1", "a").putTag("2", "a").merge(base.toBuilder().putTag("2", "a").putTag("3", "a").build()).build();
+        assertThat(merged).isEqualToComparingFieldByField(base.toBuilder().putTag("1", "a").putTag("2", "a").putTag("3", "a").build());
+    }
+
+    @Test
+    public void builder_merge_localEndpoint() {
+        Span merged = Span.newBuilder().merge(base.toBuilder().localEndpoint(FRONTEND).build()).build();
+        assertThat(merged).isEqualToComparingFieldByField(base.toBuilder().localEndpoint(FRONTEND).build());
+    }
+
+    @Test
+    public void builder_merge_localEndpoint_redundant() {
+        Span merged = Span.newBuilder().localEndpoint(FRONTEND).merge(base.toBuilder().localEndpoint(FRONTEND).build()).build();
+        assertThat(merged).isEqualToComparingFieldByField(base.toBuilder().localEndpoint(FRONTEND).build());
+    }
+
+    @Test
+    public void builder_merge_localEndpoint_merge() {
+        Span merged = Span.newBuilder().localEndpoint(Endpoint.newBuilder().serviceName("a").build()).merge(base.toBuilder().localEndpoint(Endpoint.newBuilder().ip("192.168.99.101").build()).build()).merge(base.toBuilder().localEndpoint(Endpoint.newBuilder().ip("2001:db8::c001").build()).build()).merge(base.toBuilder().localEndpoint(Endpoint.newBuilder().port(80).build()).build()).build();
+        assertThat(merged).isEqualToComparingFieldByField(base.toBuilder().localEndpoint(Endpoint.newBuilder().serviceName("a").ip("192.168.99.101").ip("2001:db8::c001").port(80).build()).build());
+    }
+
+    @Test
+    public void builder_merge_localEndpoint_null() {
+        Span merged = Span.newBuilder().localEndpoint(FRONTEND).merge(Span.newBuilder().traceId(base.traceId()).id(base.id()).build()).build();
+        assertThat(merged).isEqualToComparingFieldByField(Span.newBuilder().traceId(base.traceId()).id(base.id()).localEndpoint(FRONTEND).build());
+    }
+
+    @Test
+    public void builder_merge_remoteEndpoint_null() {
+        Span merged = Span.newBuilder().remoteEndpoint(FRONTEND).merge(Span.newBuilder().traceId(base.traceId()).id(base.id()).build()).build();
+        assertThat(merged).isEqualToComparingFieldByField(Span.newBuilder().traceId(base.traceId()).id(base.id()).remoteEndpoint(FRONTEND).build());
+    }
+
+    @Test
+    public void builder_merge_remoteEndpoint() {
+        Span merged = Span.newBuilder().merge(base.toBuilder().remoteEndpoint(FRONTEND).build()).build();
+        assertThat(merged).isEqualToComparingFieldByField(base.toBuilder().remoteEndpoint(FRONTEND).build());
+    }
+
+    @Test
+    public void builder_merge_remoteEndpoint_redundant() {
+        Span merged = Span.newBuilder().remoteEndpoint(FRONTEND).merge(base.toBuilder().remoteEndpoint(FRONTEND).build()).build();
+        assertThat(merged).isEqualToComparingFieldByField(base.toBuilder().remoteEndpoint(FRONTEND).build());
+    }
+
+    @Test
+    public void builder_merge_remoteEndpoint_merge() {
+        Span merged = Span.newBuilder().remoteEndpoint(Endpoint.newBuilder().serviceName("a").build()).merge(base.toBuilder().remoteEndpoint(Endpoint.newBuilder().ip("192.168.99.101").build()).build()).merge(base.toBuilder().remoteEndpoint(Endpoint.newBuilder().ip("2001:db8::c001").build()).build()).merge(base.toBuilder().remoteEndpoint(Endpoint.newBuilder().port(80).build()).build()).build();
+        assertThat(merged).isEqualToComparingFieldByField(base.toBuilder().remoteEndpoint(Endpoint.newBuilder().serviceName("a").ip("192.168.99.101").ip("2001:db8::c001").port(80).build()).build());
+    }
+
+    @Test
+    public void toString_isJson() {
+        assertThat(base.toString()).hasToString("{\"traceId\":\"0000000000000001\",\"id\":\"0000000000000001\",\"localEndpoint\":{\"serviceName\":\"frontend\",\"ipv4\":\"127.0.0.1\"}}");
+    }
+
+    /**
+     * Test serializable as used in spark jobs. Careful to include all non-standard fields
+     */
+    @Test
+    public void serialization() throws Exception {
+        ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+        Span span = base.toBuilder().addAnnotation(1L, "foo").build();
+        new ObjectOutputStream(buffer).writeObject(span);
+        assertThat(new ObjectInputStream(new ByteArrayInputStream(buffer.toByteArray())).readObject()).isEqualTo(span);
+    }
+
+    @Test
+    public void traceIdFromLong() {
+        assertThat(base.toBuilder().traceId(0L, 12345678L).build().traceId()).isEqualTo("0000000000bc614e");
+    }
+
+    @Test
+    public void traceIdFromLong_128() {
+        assertThat(base.toBuilder().traceId(1234L, 5678L).build().traceId()).isEqualTo("00000000000004d2000000000000162e");
+    }
+
+    /**
+     * Some tools like rsocket redundantly pass high bits as zero.
+     */
+    @Test
+    public void normalizeTraceId_truncates64BitZeroPrefix() {
+        assertThat(normalizeTraceId("0000000000000000000000000000162e")).isEqualTo("000000000000162e");
+    }
+
+    @Test
+    public void normalizeTraceId_padsTo64() {
+        assertThat(normalizeTraceId("162e")).isEqualTo("000000000000162e");
+    }
+
+    @Test
+    public void normalizeTraceId_padsTo128() {
+        assertThat(normalizeTraceId("4d2000000000000162e")).isEqualTo("00000000000004d2000000000000162e");
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void normalizeTraceId_badCharacters() {
+        normalizeTraceId("000-0000000004d20000000ss000162e");
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void traceIdFromLong_invalid() {
+        base.toBuilder().traceId(0, 0);
+    }
+
+    @Test
+    public void parentIdFromLong() {
+        assertThat(base.toBuilder().parentId(3405691582L).build().parentId()).isEqualTo("00000000cafebabe");
+    }
+
+    @Test
+    public void parentIdFromLong_zeroSameAsNull() {
+        assertThat(base.toBuilder().parentId(0L).build().parentId()).isNull();
+        assertThat(base.toBuilder().parentId("0").build().parentId()).isNull();
+    }
+
+    /**
+     * Prevents processing tools from looping
+     */
+    @Test
+    public void parentId_sameAsIdCoerseToNull() {
+        assertThat(base.toBuilder().parentId(base.id).build().parentId()).isNull();
+    }
+
+    @Test
+    public void removesSharedFlagFromClientSpans() {
+        assertThat(base.toBuilder().kind(Span.Kind.CLIENT).build().shared()).isNull();
+    }
+
+    @Test
+    public void idFromLong() {
+        assertThat(base.toBuilder().id(3405691582L).build().id()).isEqualTo("00000000cafebabe");
+    }
+
+    @Test
+    public void idFromLong_minValue() {
+        assertThat(base.toBuilder().id(Long.MAX_VALUE).build().id()).isEqualTo("7fffffffffffffff");
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void idFromLong_invalid() {
+        base.toBuilder().id(0);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void id_emptyInvalid() {
+        base.toBuilder().id("");
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void id_zerosInvalid() {
+        base.toBuilder().id("0000000000000000");
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void parentId_emptyInvalid() {
+        base.toBuilder().parentId("");
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void traceId_emptyInvalid() {
+        base.toBuilder().traceId("");
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void traceId_zerosInvalid() {
+        base.toBuilder().traceId("0000000000000000");
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void traceId_uuidInvalid() {
+        base.toBuilder().traceId(UUID.randomUUID().toString());
+    }
+
+    @org.openjdk.jmh.annotations.State(org.openjdk.jmh.annotations.Scope.Thread)
+    @org.openjdk.jmh.annotations.BenchmarkMode(org.openjdk.jmh.annotations.Mode.Throughput)
+    @org.openjdk.jmh.annotations.Warmup(iterations = 10, time = 1, timeUnit = java.util.concurrent.TimeUnit.SECONDS)
+    @org.openjdk.jmh.annotations.Measurement(iterations = 30, time = 1, timeUnit = java.util.concurrent.TimeUnit.SECONDS)
+    @org.openjdk.jmh.annotations.OutputTimeUnit(java.util.concurrent.TimeUnit.SECONDS)
+    @org.openjdk.jmh.annotations.Fork(value = 1 )
+    public static class _Benchmark extends se.chalmers.ju2jmh.api.JU2JmhBenchmark {
+
+        @org.openjdk.jmh.annotations.Benchmark
+        public void benchmark_traceIdString() throws java.lang.Throwable {
+            this.createImplementation();
+            this.runBenchmark(this.implementation()::traceIdString, this.description("traceIdString"));
+        }
+
+        @org.openjdk.jmh.annotations.Benchmark
+        public void benchmark_localEndpoint_emptyToNull() throws java.lang.Throwable {
+            this.createImplementation();
+            this.runBenchmark(this.implementation()::localEndpoint_emptyToNull, this.description("localEndpoint_emptyToNull"));
+        }
+
+        @org.openjdk.jmh.annotations.Benchmark
+        public void benchmark_remoteEndpoint_emptyToNull() throws java.lang.Throwable {
+            this.createImplementation();
+            this.runBenchmark(this.implementation()::remoteEndpoint_emptyToNull, this.description("remoteEndpoint_emptyToNull"));
+        }
+
+        @org.openjdk.jmh.annotations.Benchmark
+        public void benchmark_localServiceName() throws java.lang.Throwable {
+            this.createImplementation();
+            this.runBenchmark(this.implementation()::localServiceName, this.description("localServiceName"));
+        }
+
+        @org.openjdk.jmh.annotations.Benchmark
+        public void benchmark_remoteServiceName() throws java.lang.Throwable {
+            this.createImplementation();
+            this.runBenchmark(this.implementation()::remoteServiceName, this.description("remoteServiceName"));
+        }
+
+        @org.openjdk.jmh.annotations.Benchmark
+        public void benchmark_spanNamesLowercase() throws java.lang.Throwable {
+            this.createImplementation();
+            this.runBenchmark(this.implementation()::spanNamesLowercase, this.description("spanNamesLowercase"));
+        }
+
+        @org.openjdk.jmh.annotations.Benchmark
+        public void benchmark_annotationsSortByTimestamp() throws java.lang.Throwable {
+            this.createImplementation();
+            this.runBenchmark(this.implementation()::annotationsSortByTimestamp, this.description("annotationsSortByTimestamp"));
+        }
+
+        @org.openjdk.jmh.annotations.Benchmark
+        public void benchmark_annotationsDedupe() throws java.lang.Throwable {
+            this.createImplementation();
+            this.runBenchmark(this.implementation()::annotationsDedupe, this.description("annotationsDedupe"));
+        }
+
+        @org.openjdk.jmh.annotations.Benchmark
+        public void benchmark_putTagOverwritesValue() throws java.lang.Throwable {
+            this.createImplementation();
+            this.runBenchmark(this.implementation()::putTagOverwritesValue, this.description("putTagOverwritesValue"));
+        }
+
+        @org.openjdk.jmh.annotations.Benchmark
+        public void benchmark_builder_canUnsetParent() throws java.lang.Throwable {
+            this.createImplementation();
+            this.runBenchmark(this.implementation()::builder_canUnsetParent, this.description("builder_canUnsetParent"));
+        }
+
+        @org.openjdk.jmh.annotations.Benchmark
+        public void benchmark_clone_differentCollections() throws java.lang.Throwable {
+            this.createImplementation();
+            this.runBenchmark(this.implementation()::clone_differentCollections, this.description("clone_differentCollections"));
+        }
+
+        @org.openjdk.jmh.annotations.Benchmark
+        public void benchmark_coercesZeroTimestampsToNull() throws java.lang.Throwable {
+            this.createImplementation();
+            this.runBenchmark(this.implementation()::coercesZeroTimestampsToNull, this.description("coercesZeroTimestampsToNull"));
+        }
+
+        @org.openjdk.jmh.annotations.Benchmark
+        public void benchmark_canUsePrimitiveOverloads() throws java.lang.Throwable {
+            this.createImplementation();
+            this.runBenchmark(this.implementation()::canUsePrimitiveOverloads, this.description("canUsePrimitiveOverloads"));
+        }
+
+        @org.openjdk.jmh.annotations.Benchmark
+        public void benchmark_debug_canUnset() throws java.lang.Throwable {
+            this.createImplementation();
+            this.runBenchmark(this.implementation()::debug_canUnset, this.description("debug_canUnset"));
+        }
+
+        @org.openjdk.jmh.annotations.Benchmark
+        public void benchmark_debug_canDisable() throws java.lang.Throwable {
+            this.createImplementation();
+            this.runBenchmark(this.implementation()::debug_canDisable, this.description("debug_canDisable"));
+        }
+
+        @org.openjdk.jmh.annotations.Benchmark
+        public void benchmark_shared_canUnset() throws java.lang.Throwable {
+            this.createImplementation();
+            this.runBenchmark(this.implementation()::shared_canUnset, this.description("shared_canUnset"));
+        }
+
+        @org.openjdk.jmh.annotations.Benchmark
+        public void benchmark_shared_canDisable() throws java.lang.Throwable {
+            this.createImplementation();
+            this.runBenchmark(this.implementation()::shared_canDisable, this.description("shared_canDisable"));
+        }
+
+        @org.openjdk.jmh.annotations.Benchmark
+        public void benchmark_nullToZeroOrFalse() throws java.lang.Throwable {
+            this.createImplementation();
+            this.runBenchmark(this.implementation()::nullToZeroOrFalse, this.description("nullToZeroOrFalse"));
+        }
+
+        @org.openjdk.jmh.annotations.Benchmark
+        public void benchmark_builder_clear() throws java.lang.Throwable {
+            this.createImplementation();
+            this.runBenchmark(this.implementation()::builder_clear, this.description("builder_clear"));
+        }
+
+        @org.openjdk.jmh.annotations.Benchmark
+        public void benchmark_builder_clone() throws java.lang.Throwable {
+            this.createImplementation();
+            this.runBenchmark(this.implementation()::builder_clone, this.description("builder_clone"));
+        }
+
+        @org.openjdk.jmh.annotations.Benchmark
+        public void benchmark_builder_merge_redundant() throws java.lang.Throwable {
+            this.createImplementation();
+            this.runBenchmark(this.implementation()::builder_merge_redundant, this.description("builder_merge_redundant"));
+        }
+
+        @org.openjdk.jmh.annotations.Benchmark
+        public void benchmark_builder_merge_flags() throws java.lang.Throwable {
+            this.createImplementation();
+            this.runBenchmark(this.implementation()::builder_merge_flags, this.description("builder_merge_flags"));
+        }
+
+        @org.openjdk.jmh.annotations.Benchmark
+        public void benchmark_builder_merge_annotations() throws java.lang.Throwable {
+            this.createImplementation();
+            this.runBenchmark(this.implementation()::builder_merge_annotations, this.description("builder_merge_annotations"));
+        }
+
+        @org.openjdk.jmh.annotations.Benchmark
+        public void benchmark_builder_merge_annotations_concat() throws java.lang.Throwable {
+            this.createImplementation();
+            this.runBenchmark(this.implementation()::builder_merge_annotations_concat, this.description("builder_merge_annotations_concat"));
+        }
+
+        @org.openjdk.jmh.annotations.Benchmark
+        public void benchmark_builder_merge_tags() throws java.lang.Throwable {
+            this.createImplementation();
+            this.runBenchmark(this.implementation()::builder_merge_tags, this.description("builder_merge_tags"));
+        }
+
+        @org.openjdk.jmh.annotations.Benchmark
+        public void benchmark_builder_merge_tags_concat() throws java.lang.Throwable {
+            this.createImplementation();
+            this.runBenchmark(this.implementation()::builder_merge_tags_concat, this.description("builder_merge_tags_concat"));
+        }
+
+        @org.openjdk.jmh.annotations.Benchmark
+        public void benchmark_builder_merge_localEndpoint() throws java.lang.Throwable {
+            this.createImplementation();
+            this.runBenchmark(this.implementation()::builder_merge_localEndpoint, this.description("builder_merge_localEndpoint"));
+        }
+
+        @org.openjdk.jmh.annotations.Benchmark
+        public void benchmark_builder_merge_localEndpoint_redundant() throws java.lang.Throwable {
+            this.createImplementation();
+            this.runBenchmark(this.implementation()::builder_merge_localEndpoint_redundant, this.description("builder_merge_localEndpoint_redundant"));
+        }
+
+        @org.openjdk.jmh.annotations.Benchmark
+        public void benchmark_builder_merge_localEndpoint_merge() throws java.lang.Throwable {
+            this.createImplementation();
+            this.runBenchmark(this.implementation()::builder_merge_localEndpoint_merge, this.description("builder_merge_localEndpoint_merge"));
+        }
+
+        @org.openjdk.jmh.annotations.Benchmark
+        public void benchmark_builder_merge_localEndpoint_null() throws java.lang.Throwable {
+            this.createImplementation();
+            this.runBenchmark(this.implementation()::builder_merge_localEndpoint_null, this.description("builder_merge_localEndpoint_null"));
+        }
+
+        @org.openjdk.jmh.annotations.Benchmark
+        public void benchmark_builder_merge_remoteEndpoint_null() throws java.lang.Throwable {
+            this.createImplementation();
+            this.runBenchmark(this.implementation()::builder_merge_remoteEndpoint_null, this.description("builder_merge_remoteEndpoint_null"));
+        }
+
+        @org.openjdk.jmh.annotations.Benchmark
+        public void benchmark_builder_merge_remoteEndpoint() throws java.lang.Throwable {
+            this.createImplementation();
+            this.runBenchmark(this.implementation()::builder_merge_remoteEndpoint, this.description("builder_merge_remoteEndpoint"));
+        }
+
+        @org.openjdk.jmh.annotations.Benchmark
+        public void benchmark_builder_merge_remoteEndpoint_redundant() throws java.lang.Throwable {
+            this.createImplementation();
+            this.runBenchmark(this.implementation()::builder_merge_remoteEndpoint_redundant, this.description("builder_merge_remoteEndpoint_redundant"));
+        }
+
+        @org.openjdk.jmh.annotations.Benchmark
+        public void benchmark_builder_merge_remoteEndpoint_merge() throws java.lang.Throwable {
+            this.createImplementation();
+            this.runBenchmark(this.implementation()::builder_merge_remoteEndpoint_merge, this.description("builder_merge_remoteEndpoint_merge"));
+        }
+
+        @org.openjdk.jmh.annotations.Benchmark
+        public void benchmark_toString_isJson() throws java.lang.Throwable {
+            this.createImplementation();
+            this.runBenchmark(this.implementation()::toString_isJson, this.description("toString_isJson"));
+        }
+
+        @org.openjdk.jmh.annotations.Benchmark
+        public void benchmark_serialization() throws java.lang.Throwable {
+            this.createImplementation();
+            this.runBenchmark(this.implementation()::serialization, this.description("serialization"));
+        }
+
+        @org.openjdk.jmh.annotations.Benchmark
+        public void benchmark_traceIdFromLong() throws java.lang.Throwable {
+            this.createImplementation();
+            this.runBenchmark(this.implementation()::traceIdFromLong, this.description("traceIdFromLong"));
+        }
+
+        @org.openjdk.jmh.annotations.Benchmark
+        public void benchmark_traceIdFromLong_128() throws java.lang.Throwable {
+            this.createImplementation();
+            this.runBenchmark(this.implementation()::traceIdFromLong_128, this.description("traceIdFromLong_128"));
+        }
+
+        @org.openjdk.jmh.annotations.Benchmark
+        public void benchmark_normalizeTraceId_truncates64BitZeroPrefix() throws java.lang.Throwable {
+            this.createImplementation();
+            this.runBenchmark(this.implementation()::normalizeTraceId_truncates64BitZeroPrefix, this.description("normalizeTraceId_truncates64BitZeroPrefix"));
+        }
+
+        @org.openjdk.jmh.annotations.Benchmark
+        public void benchmark_normalizeTraceId_padsTo64() throws java.lang.Throwable {
+            this.createImplementation();
+            this.runBenchmark(this.implementation()::normalizeTraceId_padsTo64, this.description("normalizeTraceId_padsTo64"));
+        }
+
+        @org.openjdk.jmh.annotations.Benchmark
+        public void benchmark_normalizeTraceId_padsTo128() throws java.lang.Throwable {
+            this.createImplementation();
+            this.runBenchmark(this.implementation()::normalizeTraceId_padsTo128, this.description("normalizeTraceId_padsTo128"));
+        }
+
+        @org.openjdk.jmh.annotations.Benchmark
+        public void benchmark_normalizeTraceId_badCharacters() throws java.lang.Throwable {
+            this.createImplementation();
+            this.runExceptionBenchmark(this.implementation()::normalizeTraceId_badCharacters, this.description("normalizeTraceId_badCharacters"), java.lang.IllegalArgumentException.class);
+        }
+
+        @org.openjdk.jmh.annotations.Benchmark
+        public void benchmark_traceIdFromLong_invalid() throws java.lang.Throwable {
+            this.createImplementation();
+            this.runExceptionBenchmark(this.implementation()::traceIdFromLong_invalid, this.description("traceIdFromLong_invalid"), java.lang.IllegalArgumentException.class);
+        }
+
+        @org.openjdk.jmh.annotations.Benchmark
+        public void benchmark_parentIdFromLong() throws java.lang.Throwable {
+            this.createImplementation();
+            this.runBenchmark(this.implementation()::parentIdFromLong, this.description("parentIdFromLong"));
+        }
+
+        @org.openjdk.jmh.annotations.Benchmark
+        public void benchmark_parentIdFromLong_zeroSameAsNull() throws java.lang.Throwable {
+            this.createImplementation();
+            this.runBenchmark(this.implementation()::parentIdFromLong_zeroSameAsNull, this.description("parentIdFromLong_zeroSameAsNull"));
+        }
+
+        @org.openjdk.jmh.annotations.Benchmark
+        public void benchmark_parentId_sameAsIdCoerseToNull() throws java.lang.Throwable {
+            this.createImplementation();
+            this.runBenchmark(this.implementation()::parentId_sameAsIdCoerseToNull, this.description("parentId_sameAsIdCoerseToNull"));
+        }
+
+        @org.openjdk.jmh.annotations.Benchmark
+        public void benchmark_removesSharedFlagFromClientSpans() throws java.lang.Throwable {
+            this.createImplementation();
+            this.runBenchmark(this.implementation()::removesSharedFlagFromClientSpans, this.description("removesSharedFlagFromClientSpans"));
+        }
+
+        @org.openjdk.jmh.annotations.Benchmark
+        public void benchmark_idFromLong() throws java.lang.Throwable {
+            this.createImplementation();
+            this.runBenchmark(this.implementation()::idFromLong, this.description("idFromLong"));
+        }
+
+        @org.openjdk.jmh.annotations.Benchmark
+        public void benchmark_idFromLong_minValue() throws java.lang.Throwable {
+            this.createImplementation();
+            this.runBenchmark(this.implementation()::idFromLong_minValue, this.description("idFromLong_minValue"));
+        }
+
+        @org.openjdk.jmh.annotations.Benchmark
+        public void benchmark_idFromLong_invalid() throws java.lang.Throwable {
+            this.createImplementation();
+            this.runExceptionBenchmark(this.implementation()::idFromLong_invalid, this.description("idFromLong_invalid"), java.lang.IllegalArgumentException.class);
+        }
+
+        @org.openjdk.jmh.annotations.Benchmark
+        public void benchmark_id_emptyInvalid() throws java.lang.Throwable {
+            this.createImplementation();
+            this.runExceptionBenchmark(this.implementation()::id_emptyInvalid, this.description("id_emptyInvalid"), java.lang.IllegalArgumentException.class);
+        }
+
+        @org.openjdk.jmh.annotations.Benchmark
+        public void benchmark_id_zerosInvalid() throws java.lang.Throwable {
+            this.createImplementation();
+            this.runExceptionBenchmark(this.implementation()::id_zerosInvalid, this.description("id_zerosInvalid"), java.lang.IllegalArgumentException.class);
+        }
+
+        @org.openjdk.jmh.annotations.Benchmark
+        public void benchmark_parentId_emptyInvalid() throws java.lang.Throwable {
+            this.createImplementation();
+            this.runExceptionBenchmark(this.implementation()::parentId_emptyInvalid, this.description("parentId_emptyInvalid"), java.lang.IllegalArgumentException.class);
+        }
+
+        @org.openjdk.jmh.annotations.Benchmark
+        public void benchmark_traceId_emptyInvalid() throws java.lang.Throwable {
+            this.createImplementation();
+            this.runExceptionBenchmark(this.implementation()::traceId_emptyInvalid, this.description("traceId_emptyInvalid"), java.lang.IllegalArgumentException.class);
+        }
+
+        @org.openjdk.jmh.annotations.Benchmark
+        public void benchmark_traceId_zerosInvalid() throws java.lang.Throwable {
+            this.createImplementation();
+            this.runExceptionBenchmark(this.implementation()::traceId_zerosInvalid, this.description("traceId_zerosInvalid"), java.lang.IllegalArgumentException.class);
+        }
+
+        @org.openjdk.jmh.annotations.Benchmark
+        public void benchmark_traceId_uuidInvalid() throws java.lang.Throwable {
+            this.createImplementation();
+            this.runExceptionBenchmark(this.implementation()::traceId_uuidInvalid, this.description("traceId_uuidInvalid"), java.lang.IllegalArgumentException.class);
+        }
+
+        private SpanTest implementation;
+
+        @java.lang.Override
+        public void createImplementation() throws java.lang.Throwable {
+            this.implementation = new SpanTest();
+        }
+
+        @java.lang.Override
+        public SpanTest implementation() {
+            return this.implementation;
+        }
+    }
 }

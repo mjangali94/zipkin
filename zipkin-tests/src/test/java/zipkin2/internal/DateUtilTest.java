@@ -19,36 +19,70 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.TimeZone;
 import org.junit.Test;
-
 import static java.util.concurrent.TimeUnit.DAYS;
 import static org.assertj.core.api.Assertions.assertThat;
 import static zipkin2.internal.DateUtil.midnightUTC;
 
 public class DateUtilTest {
 
-  @Test
-  public void midnightUTCTest() throws ParseException {
+    @Test
+    public void midnightUTCTest() throws ParseException {
+        DateFormat iso8601 = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssX");
+        iso8601.setTimeZone(TimeZone.getTimeZone("UTC"));
+        Date date = iso8601.parse("2011-04-15T20:08:18Z");
+        long midnight = midnightUTC(date.getTime());
+        assertThat(iso8601.format(new Date(midnight))).isEqualTo("2011-04-15T00:00:00Z");
+    }
 
-    DateFormat iso8601 = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssX");
-    iso8601.setTimeZone(TimeZone.getTimeZone("UTC"));
+    @Test
+    public void getDays() {
+        assertThat(DateUtil.epochDays(DAYS.toMillis(2), DAYS.toMillis(1))).containsExactly(DAYS.toMillis(1), DAYS.toMillis(2));
+    }
 
-    Date date = iso8601.parse("2011-04-15T20:08:18Z");
+    /**
+     * Looking back earlier than 1970 is likely a bug
+     */
+    @Test
+    public void getDays_doesntLookEarlierThan1970() {
+        assertThat(DateUtil.epochDays(DAYS.toMillis(2), DAYS.toMillis(3))).containsExactly(0L, DAYS.toMillis(1), DAYS.toMillis(2));
+    }
 
-    long midnight = midnightUTC(date.getTime());
+        @org.openjdk.jmh.annotations.State(org.openjdk.jmh.annotations.Scope.Thread)
+    @org.openjdk.jmh.annotations.BenchmarkMode(org.openjdk.jmh.annotations.Mode.Throughput)
+    @org.openjdk.jmh.annotations.Warmup(iterations = 10, time = 1, timeUnit = java.util.concurrent.TimeUnit.SECONDS)
+    @org.openjdk.jmh.annotations.Measurement(iterations = 30, time = 1, timeUnit = java.util.concurrent.TimeUnit.SECONDS)
+    @org.openjdk.jmh.annotations.OutputTimeUnit(java.util.concurrent.TimeUnit.SECONDS)
+    @org.openjdk.jmh.annotations.Fork(value = 1 )
+    public static class _Benchmark extends se.chalmers.ju2jmh.api.JU2JmhBenchmark {
 
-    assertThat(iso8601.format(new Date(midnight))).isEqualTo("2011-04-15T00:00:00Z");
-  }
+        @org.openjdk.jmh.annotations.Benchmark
+        public void benchmark_midnightUTCTest() throws java.lang.Throwable {
+            this.createImplementation();
+            this.runBenchmark(this.implementation()::midnightUTCTest, this.description("midnightUTCTest"));
+        }
 
-  @Test
-  public void getDays() {
-    assertThat(DateUtil.epochDays(DAYS.toMillis(2), DAYS.toMillis(1)))
-        .containsExactly(DAYS.toMillis(1), DAYS.toMillis(2));
-  }
+        @org.openjdk.jmh.annotations.Benchmark
+        public void benchmark_getDays() throws java.lang.Throwable {
+            this.createImplementation();
+            this.runBenchmark(this.implementation()::getDays, this.description("getDays"));
+        }
 
-  /** Looking back earlier than 1970 is likely a bug */
-  @Test
-  public void getDays_doesntLookEarlierThan1970() {
-    assertThat(DateUtil.epochDays(DAYS.toMillis(2), DAYS.toMillis(3)))
-        .containsExactly(0L, DAYS.toMillis(1), DAYS.toMillis(2));
-  }
+        @org.openjdk.jmh.annotations.Benchmark
+        public void benchmark_getDays_doesntLookEarlierThan1970() throws java.lang.Throwable {
+            this.createImplementation();
+            this.runBenchmark(this.implementation()::getDays_doesntLookEarlierThan1970, this.description("getDays_doesntLookEarlierThan1970"));
+        }
+
+        private DateUtilTest implementation;
+
+        @java.lang.Override
+        public void createImplementation() throws java.lang.Throwable {
+            this.implementation = new DateUtilTest();
+        }
+
+        @java.lang.Override
+        public DateUtilTest implementation() {
+            return this.implementation;
+        }
+    }
 }

@@ -16,52 +16,109 @@ package zipkin2.codec;
 import java.util.Arrays;
 import java.util.List;
 import org.junit.Test;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class EncodingTest {
 
-  @Test public void emptyList_json() {
-    List<byte[]> encoded = Arrays.asList();
-    assertThat(Encoding.JSON.listSizeInBytes(encoded))
-      .isEqualTo(2 /* [] */);
-  }
+    @Test
+    public void emptyList_json() {
+        List<byte[]> encoded = Arrays.asList();
+        assertThat(Encoding.JSON.listSizeInBytes(encoded)).isEqualTo(2);
+    }
 
-  @Test public void singletonList_json() {
-    List<byte[]> encoded = Arrays.asList(new byte[10]);
+    @Test
+    public void singletonList_json() {
+        List<byte[]> encoded = Arrays.asList(new byte[10]);
+        assertThat(Encoding.JSON.listSizeInBytes(encoded.get(0).length)).isEqualTo(2 + /* [] */
+        10);
+        assertThat(Encoding.JSON.listSizeInBytes(encoded)).isEqualTo(2 + /* [] */
+        10);
+    }
 
-    assertThat(Encoding.JSON.listSizeInBytes(encoded.get(0).length))
-      .isEqualTo(2 /* [] */ + 10);
-    assertThat(Encoding.JSON.listSizeInBytes(encoded))
-      .isEqualTo(2 /* [] */ + 10);
-  }
+    @Test
+    public void multiItemList_json() {
+        List<byte[]> encoded = Arrays.asList(new byte[3], new byte[4], new byte[128]);
+        assertThat(Encoding.JSON.listSizeInBytes(encoded)).isEqualTo(2 + /* [] */
+        3 + 1 + /* , */
+        4 + 1 + /* , */
+        128);
+    }
 
-  @Test public void multiItemList_json() {
-    List<byte[]> encoded = Arrays.asList(new byte[3], new byte[4], new byte[128]);
-    assertThat(Encoding.JSON.listSizeInBytes(encoded))
-      .isEqualTo(2 /* [] */ + 3 + 1 /* , */ + 4 + 1  /* , */ + 128);
-  }
+    @Test
+    public void emptyList_proto3() {
+        List<byte[]> encoded = Arrays.asList();
+        assertThat(Encoding.PROTO3.listSizeInBytes(encoded)).isEqualTo(0);
+    }
 
-  @Test public void emptyList_proto3() {
-    List<byte[]> encoded = Arrays.asList();
-    assertThat(Encoding.PROTO3.listSizeInBytes(encoded))
-      .isEqualTo(0);
-  }
+    // an entry in a list is a repeated field
+    @Test
+    public void singletonList_proto3() {
+        List<byte[]> encoded = Arrays.asList(new byte[10]);
+        assertThat(Encoding.PROTO3.listSizeInBytes(encoded.get(0).length)).isEqualTo(10);
+        assertThat(Encoding.PROTO3.listSizeInBytes(encoded)).isEqualTo(10);
+    }
 
-  // an entry in a list is a repeated field
-  @Test public void singletonList_proto3() {
-    List<byte[]> encoded = Arrays.asList(new byte[10]);
+    // per ListOfSpans in zipkin2.proto
+    @Test
+    public void multiItemList_proto3() {
+        List<byte[]> encoded = Arrays.asList(new byte[3], new byte[4], new byte[128]);
+        assertThat(Encoding.PROTO3.listSizeInBytes(encoded)).isEqualTo(3 + 4 + 128);
+    }
 
-    assertThat(Encoding.PROTO3.listSizeInBytes(encoded.get(0).length))
-      .isEqualTo(10);
-    assertThat(Encoding.PROTO3.listSizeInBytes(encoded))
-      .isEqualTo(10);
-  }
+        @org.openjdk.jmh.annotations.State(org.openjdk.jmh.annotations.Scope.Thread)
+    @org.openjdk.jmh.annotations.BenchmarkMode(org.openjdk.jmh.annotations.Mode.Throughput)
+    @org.openjdk.jmh.annotations.Warmup(iterations = 10, time = 1, timeUnit = java.util.concurrent.TimeUnit.SECONDS)
+    @org.openjdk.jmh.annotations.Measurement(iterations = 30, time = 1, timeUnit = java.util.concurrent.TimeUnit.SECONDS)
+    @org.openjdk.jmh.annotations.OutputTimeUnit(java.util.concurrent.TimeUnit.SECONDS)
+    @org.openjdk.jmh.annotations.Fork(value = 1 )
+    public static class _Benchmark extends se.chalmers.ju2jmh.api.JU2JmhBenchmark {
 
-  // per ListOfSpans in zipkin2.proto
-  @Test public void multiItemList_proto3() {
-    List<byte[]> encoded = Arrays.asList(new byte[3], new byte[4], new byte[128]);
-    assertThat(Encoding.PROTO3.listSizeInBytes(encoded))
-      .isEqualTo(3 + 4 + 128);
-  }
+        @org.openjdk.jmh.annotations.Benchmark
+        public void benchmark_emptyList_json() throws java.lang.Throwable {
+            this.createImplementation();
+            this.runBenchmark(this.implementation()::emptyList_json, this.description("emptyList_json"));
+        }
+
+        @org.openjdk.jmh.annotations.Benchmark
+        public void benchmark_singletonList_json() throws java.lang.Throwable {
+            this.createImplementation();
+            this.runBenchmark(this.implementation()::singletonList_json, this.description("singletonList_json"));
+        }
+
+        @org.openjdk.jmh.annotations.Benchmark
+        public void benchmark_multiItemList_json() throws java.lang.Throwable {
+            this.createImplementation();
+            this.runBenchmark(this.implementation()::multiItemList_json, this.description("multiItemList_json"));
+        }
+
+        @org.openjdk.jmh.annotations.Benchmark
+        public void benchmark_emptyList_proto3() throws java.lang.Throwable {
+            this.createImplementation();
+            this.runBenchmark(this.implementation()::emptyList_proto3, this.description("emptyList_proto3"));
+        }
+
+        @org.openjdk.jmh.annotations.Benchmark
+        public void benchmark_singletonList_proto3() throws java.lang.Throwable {
+            this.createImplementation();
+            this.runBenchmark(this.implementation()::singletonList_proto3, this.description("singletonList_proto3"));
+        }
+
+        @org.openjdk.jmh.annotations.Benchmark
+        public void benchmark_multiItemList_proto3() throws java.lang.Throwable {
+            this.createImplementation();
+            this.runBenchmark(this.implementation()::multiItemList_proto3, this.description("multiItemList_proto3"));
+        }
+
+        private EncodingTest implementation;
+
+        @java.lang.Override
+        public void createImplementation() throws java.lang.Throwable {
+            this.implementation = new EncodingTest();
+        }
+
+        @java.lang.Override
+        public EncodingTest implementation() {
+            return this.implementation;
+        }
+    }
 }

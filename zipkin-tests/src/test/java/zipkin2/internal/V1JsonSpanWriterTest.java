@@ -16,201 +16,294 @@ package zipkin2.internal;
 import org.junit.Test;
 import zipkin2.Endpoint;
 import zipkin2.Span;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static zipkin2.TestObjects.CLIENT_SPAN;
 import static zipkin2.internal.JsonCodec.UTF_8;
 
 public class V1JsonSpanWriterTest {
-  V1JsonSpanWriter writer = new V1JsonSpanWriter();
-  byte[] bytes = new byte[2048]; // bigger than needed to test sizeInBytes
-  WriteBuffer buf = WriteBuffer.wrap(bytes);
 
-  @Test
-  public void sizeInBytes() {
-    writer.write(CLIENT_SPAN, buf);
+    V1JsonSpanWriter writer = new V1JsonSpanWriter();
 
-    assertThat(writer.sizeInBytes(CLIENT_SPAN)).isEqualTo(buf.pos());
-  }
+    // bigger than needed to test sizeInBytes
+    byte[] bytes = new byte[2048];
 
-  @Test
-  public void writesCoreAnnotations_client() {
-    writer.write(CLIENT_SPAN, buf);
+    WriteBuffer buf = WriteBuffer.wrap(bytes);
 
-    writesCoreAnnotations("cs", "cr");
-  }
+    @Test
+    public void sizeInBytes() {
+        writer.write(CLIENT_SPAN, buf);
+        assertThat(writer.sizeInBytes(CLIENT_SPAN)).isEqualTo(buf.pos());
+    }
 
-  @Test
-  public void writesCoreAnnotations_server() {
-    writer.write(CLIENT_SPAN.toBuilder().kind(Span.Kind.SERVER).build(), buf);
+    @Test
+    public void writesCoreAnnotations_client() {
+        writer.write(CLIENT_SPAN, buf);
+        writesCoreAnnotations("cs", "cr");
+    }
 
-    writesCoreAnnotations("sr", "ss");
-  }
+    @Test
+    public void writesCoreAnnotations_server() {
+        writer.write(CLIENT_SPAN.toBuilder().kind(Span.Kind.SERVER).build(), buf);
+        writesCoreAnnotations("sr", "ss");
+    }
 
-  @Test
-  public void writesCoreAnnotations_producer() {
-    writer.write(CLIENT_SPAN.toBuilder().kind(Span.Kind.PRODUCER).build(), buf);
+    @Test
+    public void writesCoreAnnotations_producer() {
+        writer.write(CLIENT_SPAN.toBuilder().kind(Span.Kind.PRODUCER).build(), buf);
+        writesCoreAnnotations("ms", "ws");
+    }
 
-    writesCoreAnnotations("ms", "ws");
-  }
+    @Test
+    public void writesCoreAnnotations_consumer() {
+        writer.write(CLIENT_SPAN.toBuilder().kind(Span.Kind.CONSUMER).build(), buf);
+        writesCoreAnnotations("wr", "mr");
+    }
 
-  @Test
-  public void writesCoreAnnotations_consumer() {
-    writer.write(CLIENT_SPAN.toBuilder().kind(Span.Kind.CONSUMER).build(), buf);
+    void writesCoreAnnotations(String begin, String end) {
+        String json = new String(bytes, UTF_8);
+        assertThat(json).contains("{\"timestamp\":" + CLIENT_SPAN.timestamp() + ",\"value\":\"" + begin + "\"");
+        assertThat(json).contains("{\"timestamp\":" + (CLIENT_SPAN.timestampAsLong() + CLIENT_SPAN.durationAsLong()) + ",\"value\":\"" + end + "\"");
+    }
 
-    writesCoreAnnotations("wr", "mr");
-  }
+    @Test
+    public void writesCoreSendAnnotations_client() {
+        writer.write(CLIENT_SPAN.toBuilder().duration(null).build(), buf);
+        writesCoreSendAnnotations("cs");
+    }
 
-  void writesCoreAnnotations(String begin, String end) {
-    String json = new String(bytes, UTF_8);
+    @Test
+    public void writesCoreSendAnnotations_server() {
+        writer.write(CLIENT_SPAN.toBuilder().duration(null).kind(Span.Kind.SERVER).build(), buf);
+        writesCoreSendAnnotations("sr");
+    }
 
-    assertThat(json)
-        .contains("{\"timestamp\":" + CLIENT_SPAN.timestamp() + ",\"value\":\"" + begin + "\"");
-    assertThat(json)
-        .contains("{\"timestamp\":"
-          + (CLIENT_SPAN.timestampAsLong() + CLIENT_SPAN.durationAsLong())
-          + ",\"value\":\"" + end + "\"");
-  }
+    @Test
+    public void writesCoreSendAnnotations_producer() {
+        writer.write(CLIENT_SPAN.toBuilder().duration(null).kind(Span.Kind.PRODUCER).build(), buf);
+        writesCoreSendAnnotations("ms");
+    }
 
-  @Test
-  public void writesCoreSendAnnotations_client() {
-    writer.write(CLIENT_SPAN.toBuilder().duration(null).build(), buf);
+    @Test
+    public void writesCoreSendAnnotations_consumer() {
+        writer.write(CLIENT_SPAN.toBuilder().duration(null).kind(Span.Kind.CONSUMER).build(), buf);
+        writesCoreSendAnnotations("mr");
+    }
 
-    writesCoreSendAnnotations("cs");
-  }
+    void writesCoreSendAnnotations(String begin) {
+        String json = new String(bytes, UTF_8);
+        assertThat(json).contains("{\"timestamp\":" + CLIENT_SPAN.timestamp() + ",\"value\":\"" + begin + "\"");
+    }
 
-  @Test
-  public void writesCoreSendAnnotations_server() {
-    writer.write(CLIENT_SPAN.toBuilder().duration(null).kind(Span.Kind.SERVER).build(), buf);
+    @Test
+    public void writesAddressBinaryAnnotation_client() {
+        writer.write(CLIENT_SPAN.toBuilder().build(), buf);
+        writesAddressBinaryAnnotation("sa");
+    }
 
-    writesCoreSendAnnotations("sr");
-  }
+    @Test
+    public void writesAddressBinaryAnnotation_server() {
+        writer.write(CLIENT_SPAN.toBuilder().kind(Span.Kind.SERVER).build(), buf);
+        writesAddressBinaryAnnotation("ca");
+    }
 
-  @Test
-  public void writesCoreSendAnnotations_producer() {
-    writer.write(CLIENT_SPAN.toBuilder().duration(null).kind(Span.Kind.PRODUCER).build(), buf);
+    @Test
+    public void writesAddressBinaryAnnotation_producer() {
+        writer.write(CLIENT_SPAN.toBuilder().kind(Span.Kind.PRODUCER).build(), buf);
+        writesAddressBinaryAnnotation("ma");
+    }
 
-    writesCoreSendAnnotations("ms");
-  }
+    @Test
+    public void writesAddressBinaryAnnotation_consumer() {
+        writer.write(CLIENT_SPAN.toBuilder().kind(Span.Kind.CONSUMER).build(), buf);
+        writesAddressBinaryAnnotation("ma");
+    }
 
-  @Test
-  public void writesCoreSendAnnotations_consumer() {
-    writer.write(CLIENT_SPAN.toBuilder().duration(null).kind(Span.Kind.CONSUMER).build(), buf);
+    void writesAddressBinaryAnnotation(String address) {
+        assertThat(new String(bytes, UTF_8)).contains("{\"key\":\"" + address + "\",\"value\":true,\"endpoint\":");
+    }
 
-    writesCoreSendAnnotations("mr");
-  }
+    @Test
+    public void writes128BitTraceId() {
+        writer.write(CLIENT_SPAN, buf);
+        assertThat(new String(bytes, UTF_8)).startsWith("{\"traceId\":\"" + CLIENT_SPAN.traceId() + "\"");
+    }
 
-  void writesCoreSendAnnotations(String begin) {
-    String json = new String(bytes, UTF_8);
+    @Test
+    public void annotationsHaveEndpoints() {
+        writer.write(CLIENT_SPAN, buf);
+        assertThat(new String(bytes, UTF_8)).contains("\"value\":\"foo\",\"endpoint\":{\"serviceName\":\"frontend\",\"ipv4\":\"127.0.0.1\"}");
+    }
 
-    assertThat(json)
-        .contains("{\"timestamp\":" + CLIENT_SPAN.timestamp() + ",\"value\":\"" + begin + "\"");
-  }
+    @Test
+    public void writesTimestampAndDuration() {
+        writer.write(CLIENT_SPAN, buf);
+        assertThat(new String(bytes, UTF_8)).contains("\"timestamp\":" + CLIENT_SPAN.timestamp() + ",\"duration\":" + CLIENT_SPAN.duration());
+    }
 
-  @Test
-  public void writesAddressBinaryAnnotation_client() {
-    writer.write(CLIENT_SPAN.toBuilder().build(), buf);
+    @Test
+    public void skipsTimestampAndDuration_shared() {
+        writer.write(CLIENT_SPAN.toBuilder().kind(Span.Kind.SERVER).shared(true).build(), buf);
+        assertThat(new String(bytes, UTF_8)).doesNotContain("\"timestamp\":" + CLIENT_SPAN.timestamp() + ",\"duration\":" + CLIENT_SPAN.duration());
+    }
 
-    writesAddressBinaryAnnotation("sa");
-  }
+    @Test
+    public void writesEmptySpanName() {
+        Span span = Span.newBuilder().traceId("7180c278b62e8f6a216a2aea45d08fc9").parentId("6b221d5bc9e6496c").id("5b4185666d50f68b").build();
+        writer.write(span, buf);
+        assertThat(new String(bytes, UTF_8)).contains("\"name\":\"\"");
+    }
 
-  @Test
-  public void writesAddressBinaryAnnotation_server() {
-    writer.write(CLIENT_SPAN.toBuilder().kind(Span.Kind.SERVER).build(), buf);
+    @Test
+    public void writesEmptyServiceName() {
+        Span span = CLIENT_SPAN.toBuilder().localEndpoint(Endpoint.newBuilder().ip("127.0.0.1").build()).build();
+        writer.write(span, buf);
+        assertThat(new String(bytes, UTF_8)).contains("\"value\":\"foo\",\"endpoint\":{\"serviceName\":\"\",\"ipv4\":\"127.0.0.1\"}");
+    }
 
-    writesAddressBinaryAnnotation("ca");
-  }
+    @Test
+    public void tagsAreBinaryAnnotations() {
+        writer.write(CLIENT_SPAN, buf);
+        assertThat(new String(bytes, UTF_8)).contains("\"binaryAnnotations\":[" + "{\"key\":\"clnt/finagle.version\",\"value\":\"6.45.0\",\"endpoint\":{\"serviceName\":\"frontend\",\"ipv4\":\"127.0.0.1\"}}," + "{\"key\":\"http.path\",\"value\":\"/api\",\"endpoint\":{\"serviceName\":\"frontend\",\"ipv4\":\"127.0.0.1\"}}");
+    }
 
-  @Test
-  public void writesAddressBinaryAnnotation_producer() {
-    writer.write(CLIENT_SPAN.toBuilder().kind(Span.Kind.PRODUCER).build(), buf);
+        @org.openjdk.jmh.annotations.State(org.openjdk.jmh.annotations.Scope.Thread)
+    @org.openjdk.jmh.annotations.BenchmarkMode(org.openjdk.jmh.annotations.Mode.Throughput)
+    @org.openjdk.jmh.annotations.Warmup(iterations = 10, time = 1, timeUnit = java.util.concurrent.TimeUnit.SECONDS)
+    @org.openjdk.jmh.annotations.Measurement(iterations = 30, time = 1, timeUnit = java.util.concurrent.TimeUnit.SECONDS)
+    @org.openjdk.jmh.annotations.OutputTimeUnit(java.util.concurrent.TimeUnit.SECONDS)
+    @org.openjdk.jmh.annotations.Fork(value = 1 )
+    public static class _Benchmark extends se.chalmers.ju2jmh.api.JU2JmhBenchmark {
 
-    writesAddressBinaryAnnotation("ma");
-  }
+        @org.openjdk.jmh.annotations.Benchmark
+        public void benchmark_sizeInBytes() throws java.lang.Throwable {
+            this.createImplementation();
+            this.runBenchmark(this.implementation()::sizeInBytes, this.description("sizeInBytes"));
+        }
 
-  @Test
-  public void writesAddressBinaryAnnotation_consumer() {
-    writer.write(CLIENT_SPAN.toBuilder().kind(Span.Kind.CONSUMER).build(), buf);
+        @org.openjdk.jmh.annotations.Benchmark
+        public void benchmark_writesCoreAnnotations_client() throws java.lang.Throwable {
+            this.createImplementation();
+            this.runBenchmark(this.implementation()::writesCoreAnnotations_client, this.description("writesCoreAnnotations_client"));
+        }
 
-    writesAddressBinaryAnnotation("ma");
-  }
+        @org.openjdk.jmh.annotations.Benchmark
+        public void benchmark_writesCoreAnnotations_server() throws java.lang.Throwable {
+            this.createImplementation();
+            this.runBenchmark(this.implementation()::writesCoreAnnotations_server, this.description("writesCoreAnnotations_server"));
+        }
 
-  void writesAddressBinaryAnnotation(String address) {
-    assertThat(new String(bytes, UTF_8))
-      .contains("{\"key\":\"" + address + "\",\"value\":true,\"endpoint\":");
-  }
+        @org.openjdk.jmh.annotations.Benchmark
+        public void benchmark_writesCoreAnnotations_producer() throws java.lang.Throwable {
+            this.createImplementation();
+            this.runBenchmark(this.implementation()::writesCoreAnnotations_producer, this.description("writesCoreAnnotations_producer"));
+        }
 
-  @Test
-  public void writes128BitTraceId() {
-    writer.write(CLIENT_SPAN, buf);
+        @org.openjdk.jmh.annotations.Benchmark
+        public void benchmark_writesCoreAnnotations_consumer() throws java.lang.Throwable {
+            this.createImplementation();
+            this.runBenchmark(this.implementation()::writesCoreAnnotations_consumer, this.description("writesCoreAnnotations_consumer"));
+        }
 
-    assertThat(new String(bytes, UTF_8))
-        .startsWith("{\"traceId\":\"" + CLIENT_SPAN.traceId() + "\"");
-  }
+        @org.openjdk.jmh.annotations.Benchmark
+        public void benchmark_writesCoreSendAnnotations_client() throws java.lang.Throwable {
+            this.createImplementation();
+            this.runBenchmark(this.implementation()::writesCoreSendAnnotations_client, this.description("writesCoreSendAnnotations_client"));
+        }
 
-  @Test
-  public void annotationsHaveEndpoints() {
-    writer.write(CLIENT_SPAN, buf);
+        @org.openjdk.jmh.annotations.Benchmark
+        public void benchmark_writesCoreSendAnnotations_server() throws java.lang.Throwable {
+            this.createImplementation();
+            this.runBenchmark(this.implementation()::writesCoreSendAnnotations_server, this.description("writesCoreSendAnnotations_server"));
+        }
 
-    assertThat(new String(bytes, UTF_8))
-        .contains(
-            "\"value\":\"foo\",\"endpoint\":{\"serviceName\":\"frontend\",\"ipv4\":\"127.0.0.1\"}");
-  }
+        @org.openjdk.jmh.annotations.Benchmark
+        public void benchmark_writesCoreSendAnnotations_producer() throws java.lang.Throwable {
+            this.createImplementation();
+            this.runBenchmark(this.implementation()::writesCoreSendAnnotations_producer, this.description("writesCoreSendAnnotations_producer"));
+        }
 
-  @Test
-  public void writesTimestampAndDuration() {
-    writer.write(CLIENT_SPAN, buf);
+        @org.openjdk.jmh.annotations.Benchmark
+        public void benchmark_writesCoreSendAnnotations_consumer() throws java.lang.Throwable {
+            this.createImplementation();
+            this.runBenchmark(this.implementation()::writesCoreSendAnnotations_consumer, this.description("writesCoreSendAnnotations_consumer"));
+        }
 
-    assertThat(new String(bytes, UTF_8))
-        .contains(
-            "\"timestamp\":" + CLIENT_SPAN.timestamp() + ",\"duration\":" + CLIENT_SPAN.duration());
-  }
+        @org.openjdk.jmh.annotations.Benchmark
+        public void benchmark_writesAddressBinaryAnnotation_client() throws java.lang.Throwable {
+            this.createImplementation();
+            this.runBenchmark(this.implementation()::writesAddressBinaryAnnotation_client, this.description("writesAddressBinaryAnnotation_client"));
+        }
 
-  @Test
-  public void skipsTimestampAndDuration_shared() {
-    writer.write(CLIENT_SPAN.toBuilder().kind(Span.Kind.SERVER).shared(true).build(), buf);
+        @org.openjdk.jmh.annotations.Benchmark
+        public void benchmark_writesAddressBinaryAnnotation_server() throws java.lang.Throwable {
+            this.createImplementation();
+            this.runBenchmark(this.implementation()::writesAddressBinaryAnnotation_server, this.description("writesAddressBinaryAnnotation_server"));
+        }
 
-    assertThat(new String(bytes, UTF_8))
-        .doesNotContain(
-            "\"timestamp\":" + CLIENT_SPAN.timestamp() + ",\"duration\":" + CLIENT_SPAN.duration());
-  }
+        @org.openjdk.jmh.annotations.Benchmark
+        public void benchmark_writesAddressBinaryAnnotation_producer() throws java.lang.Throwable {
+            this.createImplementation();
+            this.runBenchmark(this.implementation()::writesAddressBinaryAnnotation_producer, this.description("writesAddressBinaryAnnotation_producer"));
+        }
 
-  @Test
-  public void writesEmptySpanName() {
-    Span span =
-        Span.newBuilder()
-            .traceId("7180c278b62e8f6a216a2aea45d08fc9")
-            .parentId("6b221d5bc9e6496c")
-            .id("5b4185666d50f68b")
-            .build();
+        @org.openjdk.jmh.annotations.Benchmark
+        public void benchmark_writesAddressBinaryAnnotation_consumer() throws java.lang.Throwable {
+            this.createImplementation();
+            this.runBenchmark(this.implementation()::writesAddressBinaryAnnotation_consumer, this.description("writesAddressBinaryAnnotation_consumer"));
+        }
 
-    writer.write(span, buf);
+        @org.openjdk.jmh.annotations.Benchmark
+        public void benchmark_writes128BitTraceId() throws java.lang.Throwable {
+            this.createImplementation();
+            this.runBenchmark(this.implementation()::writes128BitTraceId, this.description("writes128BitTraceId"));
+        }
 
-    assertThat(new String(bytes, UTF_8)).contains("\"name\":\"\"");
-  }
+        @org.openjdk.jmh.annotations.Benchmark
+        public void benchmark_annotationsHaveEndpoints() throws java.lang.Throwable {
+            this.createImplementation();
+            this.runBenchmark(this.implementation()::annotationsHaveEndpoints, this.description("annotationsHaveEndpoints"));
+        }
 
-  @Test
-  public void writesEmptyServiceName() {
-    Span span =
-        CLIENT_SPAN
-            .toBuilder()
-            .localEndpoint(Endpoint.newBuilder().ip("127.0.0.1").build())
-            .build();
+        @org.openjdk.jmh.annotations.Benchmark
+        public void benchmark_writesTimestampAndDuration() throws java.lang.Throwable {
+            this.createImplementation();
+            this.runBenchmark(this.implementation()::writesTimestampAndDuration, this.description("writesTimestampAndDuration"));
+        }
 
-    writer.write(span, buf);
+        @org.openjdk.jmh.annotations.Benchmark
+        public void benchmark_skipsTimestampAndDuration_shared() throws java.lang.Throwable {
+            this.createImplementation();
+            this.runBenchmark(this.implementation()::skipsTimestampAndDuration_shared, this.description("skipsTimestampAndDuration_shared"));
+        }
 
-    assertThat(new String(bytes, UTF_8))
-        .contains("\"value\":\"foo\",\"endpoint\":{\"serviceName\":\"\",\"ipv4\":\"127.0.0.1\"}");
-  }
+        @org.openjdk.jmh.annotations.Benchmark
+        public void benchmark_writesEmptySpanName() throws java.lang.Throwable {
+            this.createImplementation();
+            this.runBenchmark(this.implementation()::writesEmptySpanName, this.description("writesEmptySpanName"));
+        }
 
-  @Test
-  public void tagsAreBinaryAnnotations() {
-    writer.write(CLIENT_SPAN, buf);
+        @org.openjdk.jmh.annotations.Benchmark
+        public void benchmark_writesEmptyServiceName() throws java.lang.Throwable {
+            this.createImplementation();
+            this.runBenchmark(this.implementation()::writesEmptyServiceName, this.description("writesEmptyServiceName"));
+        }
 
-    assertThat(new String(bytes, UTF_8))
-        .contains(
-            "\"binaryAnnotations\":["
-                + "{\"key\":\"clnt/finagle.version\",\"value\":\"6.45.0\",\"endpoint\":{\"serviceName\":\"frontend\",\"ipv4\":\"127.0.0.1\"}},"
-                + "{\"key\":\"http.path\",\"value\":\"/api\",\"endpoint\":{\"serviceName\":\"frontend\",\"ipv4\":\"127.0.0.1\"}}");
-  }
+        @org.openjdk.jmh.annotations.Benchmark
+        public void benchmark_tagsAreBinaryAnnotations() throws java.lang.Throwable {
+            this.createImplementation();
+            this.runBenchmark(this.implementation()::tagsAreBinaryAnnotations, this.description("tagsAreBinaryAnnotations"));
+        }
+
+        private V1JsonSpanWriterTest implementation;
+
+        @java.lang.Override
+        public void createImplementation() throws java.lang.Throwable {
+            this.implementation = new V1JsonSpanWriterTest();
+        }
+
+        @java.lang.Override
+        public V1JsonSpanWriterTest implementation() {
+            return this.implementation;
+        }
+    }
 }

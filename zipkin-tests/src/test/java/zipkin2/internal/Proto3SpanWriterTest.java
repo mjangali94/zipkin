@@ -14,50 +14,96 @@
 package zipkin2.internal;
 
 import org.junit.Test;
-
 import static java.util.Arrays.asList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static zipkin2.TestObjects.CLIENT_SPAN;
 import static zipkin2.internal.Proto3ZipkinFields.SPAN;
 
 public class Proto3SpanWriterTest {
-  Proto3SpanWriter writer = new Proto3SpanWriter();
 
-  /** proto messages always need a key, so the non-list form is just a single-field */
-  @Test public void write_startsWithSpanKeyAndLengthPrefix() {
-    byte[] bytes = writer.write(CLIENT_SPAN);
+    Proto3SpanWriter writer = new Proto3SpanWriter();
 
-    assertThat(bytes)
-      .hasSize(writer.sizeInBytes(CLIENT_SPAN))
-      .startsWith((byte) 10, SPAN.sizeOfValue(CLIENT_SPAN));
-  }
+    /**
+     * proto messages always need a key, so the non-list form is just a single-field
+     */
+    @Test
+    public void write_startsWithSpanKeyAndLengthPrefix() {
+        byte[] bytes = writer.write(CLIENT_SPAN);
+        assertThat(bytes).hasSize(writer.sizeInBytes(CLIENT_SPAN)).startsWith((byte) 10, SPAN.sizeOfValue(CLIENT_SPAN));
+    }
 
-  @Test public void writeList_startsWithSpanKeyAndLengthPrefix() {
-    byte[] bytes = writer.writeList(asList(CLIENT_SPAN));
+    @Test
+    public void writeList_startsWithSpanKeyAndLengthPrefix() {
+        byte[] bytes = writer.writeList(asList(CLIENT_SPAN));
+        assertThat(bytes).hasSize(writer.sizeInBytes(CLIENT_SPAN)).startsWith((byte) 10, SPAN.sizeOfValue(CLIENT_SPAN));
+    }
 
-    assertThat(bytes)
-      .hasSize(writer.sizeInBytes(CLIENT_SPAN))
-      .startsWith((byte) 10, SPAN.sizeOfValue(CLIENT_SPAN));
-  }
+    @Test
+    public void writeList_multiple() {
+        byte[] bytes = writer.writeList(asList(CLIENT_SPAN, CLIENT_SPAN));
+        assertThat(bytes).hasSize(writer.sizeInBytes(CLIENT_SPAN) * 2).startsWith((byte) 10, SPAN.sizeOfValue(CLIENT_SPAN));
+    }
 
-  @Test public void writeList_multiple() {
-    byte[] bytes = writer.writeList(asList(CLIENT_SPAN, CLIENT_SPAN));
+    @Test
+    public void writeList_empty() {
+        assertThat(writer.writeList(asList())).isEmpty();
+    }
 
-    assertThat(bytes)
-      .hasSize(writer.sizeInBytes(CLIENT_SPAN) * 2)
-      .startsWith((byte) 10, SPAN.sizeOfValue(CLIENT_SPAN));
-  }
+    @Test
+    public void writeList_offset_startsWithSpanKeyAndLengthPrefix() {
+        byte[] bytes = new byte[2048];
+        writer.writeList(asList(CLIENT_SPAN, CLIENT_SPAN), bytes, 0);
+        assertThat(bytes).startsWith((byte) 10, SPAN.sizeOfValue(CLIENT_SPAN));
+    }
 
-  @Test public void writeList_empty() {
-    assertThat(writer.writeList(asList()))
-      .isEmpty();
-  }
+        @org.openjdk.jmh.annotations.State(org.openjdk.jmh.annotations.Scope.Thread)
+    @org.openjdk.jmh.annotations.BenchmarkMode(org.openjdk.jmh.annotations.Mode.Throughput)
+    @org.openjdk.jmh.annotations.Warmup(iterations = 10, time = 1, timeUnit = java.util.concurrent.TimeUnit.SECONDS)
+    @org.openjdk.jmh.annotations.Measurement(iterations = 30, time = 1, timeUnit = java.util.concurrent.TimeUnit.SECONDS)
+    @org.openjdk.jmh.annotations.OutputTimeUnit(java.util.concurrent.TimeUnit.SECONDS)
+    @org.openjdk.jmh.annotations.Fork(value = 1 )
+    public static class _Benchmark extends se.chalmers.ju2jmh.api.JU2JmhBenchmark {
 
-  @Test public void writeList_offset_startsWithSpanKeyAndLengthPrefix() {
-    byte[] bytes = new byte[2048];
-    writer.writeList(asList(CLIENT_SPAN, CLIENT_SPAN), bytes, 0);
+        @org.openjdk.jmh.annotations.Benchmark
+        public void benchmark_write_startsWithSpanKeyAndLengthPrefix() throws java.lang.Throwable {
+            this.createImplementation();
+            this.runBenchmark(this.implementation()::write_startsWithSpanKeyAndLengthPrefix, this.description("write_startsWithSpanKeyAndLengthPrefix"));
+        }
 
-    assertThat(bytes)
-      .startsWith((byte) 10, SPAN.sizeOfValue(CLIENT_SPAN));
-  }
+        @org.openjdk.jmh.annotations.Benchmark
+        public void benchmark_writeList_startsWithSpanKeyAndLengthPrefix() throws java.lang.Throwable {
+            this.createImplementation();
+            this.runBenchmark(this.implementation()::writeList_startsWithSpanKeyAndLengthPrefix, this.description("writeList_startsWithSpanKeyAndLengthPrefix"));
+        }
+
+        @org.openjdk.jmh.annotations.Benchmark
+        public void benchmark_writeList_multiple() throws java.lang.Throwable {
+            this.createImplementation();
+            this.runBenchmark(this.implementation()::writeList_multiple, this.description("writeList_multiple"));
+        }
+
+        @org.openjdk.jmh.annotations.Benchmark
+        public void benchmark_writeList_empty() throws java.lang.Throwable {
+            this.createImplementation();
+            this.runBenchmark(this.implementation()::writeList_empty, this.description("writeList_empty"));
+        }
+
+        @org.openjdk.jmh.annotations.Benchmark
+        public void benchmark_writeList_offset_startsWithSpanKeyAndLengthPrefix() throws java.lang.Throwable {
+            this.createImplementation();
+            this.runBenchmark(this.implementation()::writeList_offset_startsWithSpanKeyAndLengthPrefix, this.description("writeList_offset_startsWithSpanKeyAndLengthPrefix"));
+        }
+
+        private Proto3SpanWriterTest implementation;
+
+        @java.lang.Override
+        public void createImplementation() throws java.lang.Throwable {
+            this.implementation = new Proto3SpanWriterTest();
+        }
+
+        @java.lang.Override
+        public Proto3SpanWriterTest implementation() {
+            return this.implementation;
+        }
+    }
 }

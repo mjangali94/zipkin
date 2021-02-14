@@ -16,230 +16,319 @@ package zipkin2.internal;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import org.junit.Test;
-
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.failBecauseExceptionWasNotThrown;
 
 public class ReadBufferTest {
-  @Test public void byteBuffer_limited() {
-    ByteBuffer buf = ByteBuffer.wrap("glove".getBytes(UTF_8));
-    buf.get();
-    ReadBuffer readBuffer = ReadBuffer.wrapUnsafe(buf.slice());
-    assertThat(readBuffer.readUtf8(readBuffer.available()))
-      .isEqualTo("love");
-  }
 
-  @Test public void byteBuffer_arrayOffset() {
-    ByteBuffer buf = ByteBuffer.wrap("glove".getBytes(UTF_8), 1, 4);
-    ReadBuffer readBuffer = ReadBuffer.wrapUnsafe(buf.slice());
-    assertThat(readBuffer.pos()).isEqualTo(0);
-    assertThat(readBuffer.available()).isEqualTo(4);
-    assertThat(readBuffer.readUtf8(readBuffer.available()))
-      .isEqualTo("love");
-  }
-
-  @Test public void readVarint32() {
-    assertReadVarint32(0);
-    assertReadVarint32(0b0011_1111_1111_1111);
-    assertReadVarint32(0xFFFFFFFF);
-  }
-
-  static void assertReadVarint32(int value) {
-    byte[] bytes = new byte[WriteBuffer.varintSizeInBytes(value)];
-    WriteBuffer.wrap(bytes).writeVarint(value);
-
-    assertThat(ReadBuffer.wrap(bytes).readVarint32())
-      .isEqualTo(value);
-  }
-
-  @Test public void readShort_bytes() {
-    byte[] bytes = {(byte) 0x01, (byte) 0x02};
-
-    ReadBuffer readBuffer = ReadBuffer.wrap(bytes);
-
-    assertThat(readBuffer.readShort()).isEqualTo((short) 0x0102);
-    assertThat(readBuffer.available()).isZero();
-  }
-
-  @Test public void readShort_byteBuff() {
-    byte[] bytes = {(byte) 0x01, (byte) 0x02};
-
-    ByteBuffer buffer = ByteBuffer.wrap(bytes).asReadOnlyBuffer();
-    ReadBuffer readBuffer = ReadBuffer.wrapUnsafe(buffer);
-    assertThat(readBuffer).isInstanceOf(ReadBuffer.Buff.class);
-
-    assertThat(readBuffer.readShort()).isEqualTo((short) 0x0102);
-    assertThat(readBuffer.available()).isZero();
-  }
-
-  @Test public void readShort_byteBuff_littleEndian() {
-    byte[] bytes = {(byte) 0x01, (byte) 0x02};
-
-    ByteBuffer buffer = ByteBuffer.wrap(bytes).order(ByteOrder.LITTLE_ENDIAN).asReadOnlyBuffer();
-    ReadBuffer readBuffer = ReadBuffer.wrapUnsafe(buffer);
-    assertThat(readBuffer).isInstanceOf(ReadBuffer.Buff.class);
-
-    assertThat(readBuffer.readShort()).isEqualTo((short) 0x0102);
-    assertThat(readBuffer.available()).isZero();
-  }
-
-  @Test public void readInt_bytes() {
-    byte[] bytes = {(byte) 0x01, (byte) 0x02, (byte) 0x03, (byte) 0x04};
-
-    ReadBuffer readBuffer = ReadBuffer.wrap(bytes);
-
-    assertThat(readBuffer.readInt()).isEqualTo(0x01020304);
-    assertThat(readBuffer.available()).isZero();
-  }
-
-  @Test public void readInt_byteBuff() {
-    byte[] bytes = {(byte) 0x01, (byte) 0x02, (byte) 0x03, (byte) 0x04};
-
-    ByteBuffer buffer = ByteBuffer.wrap(bytes).asReadOnlyBuffer();
-    ReadBuffer readBuffer = ReadBuffer.wrapUnsafe(buffer);
-    assertThat(readBuffer).isInstanceOf(ReadBuffer.Buff.class);
-
-    assertThat(readBuffer.readInt()).isEqualTo(0x01020304);
-    assertThat(readBuffer.available()).isZero();
-  }
-
-  @Test public void readInt_byteBuff_littleEndian() {
-    byte[] bytes = {(byte) 0x01, (byte) 0x02, (byte) 0x03, (byte) 0x04};
-
-    ByteBuffer buffer = ByteBuffer.wrap(bytes).order(ByteOrder.LITTLE_ENDIAN).asReadOnlyBuffer();
-    ReadBuffer readBuffer = ReadBuffer.wrapUnsafe(buffer);
-    assertThat(readBuffer).isInstanceOf(ReadBuffer.Buff.class);
-
-    assertThat(readBuffer.readInt()).isEqualTo(0x01020304);
-    assertThat(readBuffer.available()).isZero();
-  }
-
-  @Test public void readLong_bytes() {
-    byte[] bytes = {
-      (byte) 0x01, (byte) 0x02, (byte) 0x03, (byte) 0x04,
-      (byte) 0x05, (byte) 0x06, (byte) 0x07, (byte) 0x08,
-    };
-
-    ReadBuffer readBuffer = ReadBuffer.wrap(bytes);
-
-    assertThat(readBuffer.readLong())
-      .isEqualTo(0x0102030405060708L);
-    assertThat(readBuffer.available()).isZero();
-  }
-
-  @Test public void readLong_byteBuff() {
-    byte[] bytes = {
-      (byte) 0x01, (byte) 0x02, (byte) 0x03, (byte) 0x04,
-      (byte) 0x05, (byte) 0x06, (byte) 0x07, (byte) 0x08,
-    };
-
-    ByteBuffer buffer = ByteBuffer.wrap(bytes).asReadOnlyBuffer();
-    ReadBuffer readBuffer = ReadBuffer.wrapUnsafe(buffer);
-    assertThat(readBuffer).isInstanceOf(ReadBuffer.Buff.class);
-
-    assertThat(readBuffer.readLong())
-      .isEqualTo(0x0102030405060708L);
-    assertThat(readBuffer.available()).isZero();
-  }
-
-  @Test public void readLong_byteBuff_littleEndian() {
-    byte[] bytes = {
-      (byte) 0x01, (byte) 0x02, (byte) 0x03, (byte) 0x04,
-      (byte) 0x05, (byte) 0x06, (byte) 0x07, (byte) 0x08,
-    };
-
-    ByteBuffer buffer = ByteBuffer.wrap(bytes).order(ByteOrder.LITTLE_ENDIAN).asReadOnlyBuffer();
-    ReadBuffer readBuffer = ReadBuffer.wrapUnsafe(buffer);
-    assertThat(readBuffer).isInstanceOf(ReadBuffer.Buff.class);
-
-    assertThat(readBuffer.readLong())
-      .isEqualTo(0x0102030405060708L);
-    assertThat(readBuffer.available()).isZero();
-  }
-
-  @Test public void readLongLe_bytes() {
-    byte[] bytes = {
-      (byte) 0x01, (byte) 0x02, (byte) 0x03, (byte) 0x04,
-      (byte) 0x05, (byte) 0x06, (byte) 0x07, (byte) 0x08,
-    };
-
-    ReadBuffer readBuffer = ReadBuffer.wrap(bytes);
-
-    assertThat(readBuffer.readLongLe())
-      .isEqualTo(0x0807060504030201L);
-    assertThat(readBuffer.available()).isZero();
-  }
-
-  @Test public void readLongLe_byteBuff() {
-    byte[] bytes = {
-      (byte) 0x01, (byte) 0x02, (byte) 0x03, (byte) 0x04,
-      (byte) 0x05, (byte) 0x06, (byte) 0x07, (byte) 0x08,
-    };
-
-    ByteBuffer buffer = ByteBuffer.wrap(bytes).asReadOnlyBuffer();
-    ReadBuffer readBuffer = ReadBuffer.wrapUnsafe(buffer);
-    assertThat(readBuffer).isInstanceOf(ReadBuffer.Buff.class);
-
-    assertThat(readBuffer.readLongLe())
-      .isEqualTo(0x0807060504030201L);
-    assertThat(readBuffer.available()).isZero();
-  }
-
-  @Test public void readLongLe_byteBuff_littleEndian() {
-    byte[] bytes = {
-      (byte) 0x01, (byte) 0x02, (byte) 0x03, (byte) 0x04,
-      (byte) 0x05, (byte) 0x06, (byte) 0x07, (byte) 0x08,
-    };
-
-    ByteBuffer buffer = ByteBuffer.wrap(bytes).order(ByteOrder.LITTLE_ENDIAN).asReadOnlyBuffer();
-    ReadBuffer readBuffer = ReadBuffer.wrapUnsafe(buffer);
-    assertThat(readBuffer).isInstanceOf(ReadBuffer.Buff.class);
-
-    assertThat(readBuffer.readLongLe())
-      .isEqualTo(0x0807060504030201L);
-    assertThat(readBuffer.available()).isZero();
-  }
-
-  @Test public void readVarint32_malformedTooBig() {
-    byte[] bytes = new byte[8];
-    WriteBuffer.wrap(bytes).writeLongLe(0xffffffffffffL);
-
-    try {
-      ReadBuffer.wrap(bytes).readVarint32();
-      failBecauseExceptionWasNotThrown(IllegalArgumentException.class);
-    } catch (IllegalArgumentException e) {
-      assertThat(e)
-        .hasMessage("Greater than 32-bit varint at position 4");
+    @Test
+    public void byteBuffer_limited() {
+        ByteBuffer buf = ByteBuffer.wrap("glove".getBytes(UTF_8));
+        buf.get();
+        ReadBuffer readBuffer = ReadBuffer.wrapUnsafe(buf.slice());
+        assertThat(readBuffer.readUtf8(readBuffer.available())).isEqualTo("love");
     }
-  }
 
-  @Test public void readVarint64() {
-    assertReadVarint64(0L);
-    assertReadVarint64(0b0011_1111_1111_1111L);
-    assertReadVarint64(0xffffffffffffffffL);
-  }
-
-  static void assertReadVarint64(long value) {
-    byte[] bytes = new byte[WriteBuffer.varintSizeInBytes(value)];
-    WriteBuffer.wrap(bytes).writeVarint(value);
-
-    assertThat(ReadBuffer.wrap(bytes).readVarint64())
-      .isEqualTo(value);
-  }
-
-  @Test public void readVarint64_malformedTooBig() {
-    byte[] bytes = new byte[16];
-    WriteBuffer buffer = WriteBuffer.wrap(bytes);
-    buffer.writeLongLe(0xffffffffffffffffL);
-    buffer.writeLongLe(0xffffffffffffffffL);
-
-    try {
-      ReadBuffer.wrap(bytes).readVarint64();
-      failBecauseExceptionWasNotThrown(IllegalArgumentException.class);
-    } catch (IllegalArgumentException e) {
-      assertThat(e)
-        .hasMessage("Greater than 64-bit varint at position 9");
+    @Test
+    public void byteBuffer_arrayOffset() {
+        ByteBuffer buf = ByteBuffer.wrap("glove".getBytes(UTF_8), 1, 4);
+        ReadBuffer readBuffer = ReadBuffer.wrapUnsafe(buf.slice());
+        assertThat(readBuffer.pos()).isEqualTo(0);
+        assertThat(readBuffer.available()).isEqualTo(4);
+        assertThat(readBuffer.readUtf8(readBuffer.available())).isEqualTo("love");
     }
-  }
+
+    @Test
+    public void readVarint32() {
+        assertReadVarint32(0);
+        assertReadVarint32(0b0011_1111_1111_1111);
+        assertReadVarint32(0xFFFFFFFF);
+    }
+
+    static void assertReadVarint32(int value) {
+        byte[] bytes = new byte[WriteBuffer.varintSizeInBytes(value)];
+        WriteBuffer.wrap(bytes).writeVarint(value);
+        assertThat(ReadBuffer.wrap(bytes).readVarint32()).isEqualTo(value);
+    }
+
+    @Test
+    public void readShort_bytes() {
+        byte[] bytes = { (byte) 0x01, (byte) 0x02 };
+        ReadBuffer readBuffer = ReadBuffer.wrap(bytes);
+        assertThat(readBuffer.readShort()).isEqualTo((short) 0x0102);
+        assertThat(readBuffer.available()).isZero();
+    }
+
+    @Test
+    public void readShort_byteBuff() {
+        byte[] bytes = { (byte) 0x01, (byte) 0x02 };
+        ByteBuffer buffer = ByteBuffer.wrap(bytes).asReadOnlyBuffer();
+        ReadBuffer readBuffer = ReadBuffer.wrapUnsafe(buffer);
+        assertThat(readBuffer).isInstanceOf(ReadBuffer.Buff.class);
+        assertThat(readBuffer.readShort()).isEqualTo((short) 0x0102);
+        assertThat(readBuffer.available()).isZero();
+    }
+
+    @Test
+    public void readShort_byteBuff_littleEndian() {
+        byte[] bytes = { (byte) 0x01, (byte) 0x02 };
+        ByteBuffer buffer = ByteBuffer.wrap(bytes).order(ByteOrder.LITTLE_ENDIAN).asReadOnlyBuffer();
+        ReadBuffer readBuffer = ReadBuffer.wrapUnsafe(buffer);
+        assertThat(readBuffer).isInstanceOf(ReadBuffer.Buff.class);
+        assertThat(readBuffer.readShort()).isEqualTo((short) 0x0102);
+        assertThat(readBuffer.available()).isZero();
+    }
+
+    @Test
+    public void readInt_bytes() {
+        byte[] bytes = { (byte) 0x01, (byte) 0x02, (byte) 0x03, (byte) 0x04 };
+        ReadBuffer readBuffer = ReadBuffer.wrap(bytes);
+        assertThat(readBuffer.readInt()).isEqualTo(0x01020304);
+        assertThat(readBuffer.available()).isZero();
+    }
+
+    @Test
+    public void readInt_byteBuff() {
+        byte[] bytes = { (byte) 0x01, (byte) 0x02, (byte) 0x03, (byte) 0x04 };
+        ByteBuffer buffer = ByteBuffer.wrap(bytes).asReadOnlyBuffer();
+        ReadBuffer readBuffer = ReadBuffer.wrapUnsafe(buffer);
+        assertThat(readBuffer).isInstanceOf(ReadBuffer.Buff.class);
+        assertThat(readBuffer.readInt()).isEqualTo(0x01020304);
+        assertThat(readBuffer.available()).isZero();
+    }
+
+    @Test
+    public void readInt_byteBuff_littleEndian() {
+        byte[] bytes = { (byte) 0x01, (byte) 0x02, (byte) 0x03, (byte) 0x04 };
+        ByteBuffer buffer = ByteBuffer.wrap(bytes).order(ByteOrder.LITTLE_ENDIAN).asReadOnlyBuffer();
+        ReadBuffer readBuffer = ReadBuffer.wrapUnsafe(buffer);
+        assertThat(readBuffer).isInstanceOf(ReadBuffer.Buff.class);
+        assertThat(readBuffer.readInt()).isEqualTo(0x01020304);
+        assertThat(readBuffer.available()).isZero();
+    }
+
+    @Test
+    public void readLong_bytes() {
+        byte[] bytes = { (byte) 0x01, (byte) 0x02, (byte) 0x03, (byte) 0x04, (byte) 0x05, (byte) 0x06, (byte) 0x07, (byte) 0x08 };
+        ReadBuffer readBuffer = ReadBuffer.wrap(bytes);
+        assertThat(readBuffer.readLong()).isEqualTo(0x0102030405060708L);
+        assertThat(readBuffer.available()).isZero();
+    }
+
+    @Test
+    public void readLong_byteBuff() {
+        byte[] bytes = { (byte) 0x01, (byte) 0x02, (byte) 0x03, (byte) 0x04, (byte) 0x05, (byte) 0x06, (byte) 0x07, (byte) 0x08 };
+        ByteBuffer buffer = ByteBuffer.wrap(bytes).asReadOnlyBuffer();
+        ReadBuffer readBuffer = ReadBuffer.wrapUnsafe(buffer);
+        assertThat(readBuffer).isInstanceOf(ReadBuffer.Buff.class);
+        assertThat(readBuffer.readLong()).isEqualTo(0x0102030405060708L);
+        assertThat(readBuffer.available()).isZero();
+    }
+
+    @Test
+    public void readLong_byteBuff_littleEndian() {
+        byte[] bytes = { (byte) 0x01, (byte) 0x02, (byte) 0x03, (byte) 0x04, (byte) 0x05, (byte) 0x06, (byte) 0x07, (byte) 0x08 };
+        ByteBuffer buffer = ByteBuffer.wrap(bytes).order(ByteOrder.LITTLE_ENDIAN).asReadOnlyBuffer();
+        ReadBuffer readBuffer = ReadBuffer.wrapUnsafe(buffer);
+        assertThat(readBuffer).isInstanceOf(ReadBuffer.Buff.class);
+        assertThat(readBuffer.readLong()).isEqualTo(0x0102030405060708L);
+        assertThat(readBuffer.available()).isZero();
+    }
+
+    @Test
+    public void readLongLe_bytes() {
+        byte[] bytes = { (byte) 0x01, (byte) 0x02, (byte) 0x03, (byte) 0x04, (byte) 0x05, (byte) 0x06, (byte) 0x07, (byte) 0x08 };
+        ReadBuffer readBuffer = ReadBuffer.wrap(bytes);
+        assertThat(readBuffer.readLongLe()).isEqualTo(0x0807060504030201L);
+        assertThat(readBuffer.available()).isZero();
+    }
+
+    @Test
+    public void readLongLe_byteBuff() {
+        byte[] bytes = { (byte) 0x01, (byte) 0x02, (byte) 0x03, (byte) 0x04, (byte) 0x05, (byte) 0x06, (byte) 0x07, (byte) 0x08 };
+        ByteBuffer buffer = ByteBuffer.wrap(bytes).asReadOnlyBuffer();
+        ReadBuffer readBuffer = ReadBuffer.wrapUnsafe(buffer);
+        assertThat(readBuffer).isInstanceOf(ReadBuffer.Buff.class);
+        assertThat(readBuffer.readLongLe()).isEqualTo(0x0807060504030201L);
+        assertThat(readBuffer.available()).isZero();
+    }
+
+    @Test
+    public void readLongLe_byteBuff_littleEndian() {
+        byte[] bytes = { (byte) 0x01, (byte) 0x02, (byte) 0x03, (byte) 0x04, (byte) 0x05, (byte) 0x06, (byte) 0x07, (byte) 0x08 };
+        ByteBuffer buffer = ByteBuffer.wrap(bytes).order(ByteOrder.LITTLE_ENDIAN).asReadOnlyBuffer();
+        ReadBuffer readBuffer = ReadBuffer.wrapUnsafe(buffer);
+        assertThat(readBuffer).isInstanceOf(ReadBuffer.Buff.class);
+        assertThat(readBuffer.readLongLe()).isEqualTo(0x0807060504030201L);
+        assertThat(readBuffer.available()).isZero();
+    }
+
+    @Test
+    public void readVarint32_malformedTooBig() {
+        byte[] bytes = new byte[8];
+        WriteBuffer.wrap(bytes).writeLongLe(0xffffffffffffL);
+        try {
+            ReadBuffer.wrap(bytes).readVarint32();
+            failBecauseExceptionWasNotThrown(IllegalArgumentException.class);
+        } catch (IllegalArgumentException e) {
+            assertThat(e).hasMessage("Greater than 32-bit varint at position 4");
+        }
+    }
+
+    @Test
+    public void readVarint64() {
+        assertReadVarint64(0L);
+        assertReadVarint64(0b0011_1111_1111_1111L);
+        assertReadVarint64(0xffffffffffffffffL);
+    }
+
+    static void assertReadVarint64(long value) {
+        byte[] bytes = new byte[WriteBuffer.varintSizeInBytes(value)];
+        WriteBuffer.wrap(bytes).writeVarint(value);
+        assertThat(ReadBuffer.wrap(bytes).readVarint64()).isEqualTo(value);
+    }
+
+    @Test
+    public void readVarint64_malformedTooBig() {
+        byte[] bytes = new byte[16];
+        WriteBuffer buffer = WriteBuffer.wrap(bytes);
+        buffer.writeLongLe(0xffffffffffffffffL);
+        buffer.writeLongLe(0xffffffffffffffffL);
+        try {
+            ReadBuffer.wrap(bytes).readVarint64();
+            failBecauseExceptionWasNotThrown(IllegalArgumentException.class);
+        } catch (IllegalArgumentException e) {
+            assertThat(e).hasMessage("Greater than 64-bit varint at position 9");
+        }
+    }
+
+        @org.openjdk.jmh.annotations.State(org.openjdk.jmh.annotations.Scope.Thread)
+    @org.openjdk.jmh.annotations.BenchmarkMode(org.openjdk.jmh.annotations.Mode.Throughput)
+    @org.openjdk.jmh.annotations.Warmup(iterations = 10, time = 1, timeUnit = java.util.concurrent.TimeUnit.SECONDS)
+    @org.openjdk.jmh.annotations.Measurement(iterations = 30, time = 1, timeUnit = java.util.concurrent.TimeUnit.SECONDS)
+    @org.openjdk.jmh.annotations.OutputTimeUnit(java.util.concurrent.TimeUnit.SECONDS)
+    @org.openjdk.jmh.annotations.Fork(value = 1 )
+    public static class _Benchmark extends se.chalmers.ju2jmh.api.JU2JmhBenchmark {
+
+        @org.openjdk.jmh.annotations.Benchmark
+        public void benchmark_byteBuffer_limited() throws java.lang.Throwable {
+            this.createImplementation();
+            this.runBenchmark(this.implementation()::byteBuffer_limited, this.description("byteBuffer_limited"));
+        }
+
+        @org.openjdk.jmh.annotations.Benchmark
+        public void benchmark_byteBuffer_arrayOffset() throws java.lang.Throwable {
+            this.createImplementation();
+            this.runBenchmark(this.implementation()::byteBuffer_arrayOffset, this.description("byteBuffer_arrayOffset"));
+        }
+
+        @org.openjdk.jmh.annotations.Benchmark
+        public void benchmark_readVarint32() throws java.lang.Throwable {
+            this.createImplementation();
+            this.runBenchmark(this.implementation()::readVarint32, this.description("readVarint32"));
+        }
+
+        @org.openjdk.jmh.annotations.Benchmark
+        public void benchmark_readShort_bytes() throws java.lang.Throwable {
+            this.createImplementation();
+            this.runBenchmark(this.implementation()::readShort_bytes, this.description("readShort_bytes"));
+        }
+
+        @org.openjdk.jmh.annotations.Benchmark
+        public void benchmark_readShort_byteBuff() throws java.lang.Throwable {
+            this.createImplementation();
+            this.runBenchmark(this.implementation()::readShort_byteBuff, this.description("readShort_byteBuff"));
+        }
+
+        @org.openjdk.jmh.annotations.Benchmark
+        public void benchmark_readShort_byteBuff_littleEndian() throws java.lang.Throwable {
+            this.createImplementation();
+            this.runBenchmark(this.implementation()::readShort_byteBuff_littleEndian, this.description("readShort_byteBuff_littleEndian"));
+        }
+
+        @org.openjdk.jmh.annotations.Benchmark
+        public void benchmark_readInt_bytes() throws java.lang.Throwable {
+            this.createImplementation();
+            this.runBenchmark(this.implementation()::readInt_bytes, this.description("readInt_bytes"));
+        }
+
+        @org.openjdk.jmh.annotations.Benchmark
+        public void benchmark_readInt_byteBuff() throws java.lang.Throwable {
+            this.createImplementation();
+            this.runBenchmark(this.implementation()::readInt_byteBuff, this.description("readInt_byteBuff"));
+        }
+
+        @org.openjdk.jmh.annotations.Benchmark
+        public void benchmark_readInt_byteBuff_littleEndian() throws java.lang.Throwable {
+            this.createImplementation();
+            this.runBenchmark(this.implementation()::readInt_byteBuff_littleEndian, this.description("readInt_byteBuff_littleEndian"));
+        }
+
+        @org.openjdk.jmh.annotations.Benchmark
+        public void benchmark_readLong_bytes() throws java.lang.Throwable {
+            this.createImplementation();
+            this.runBenchmark(this.implementation()::readLong_bytes, this.description("readLong_bytes"));
+        }
+
+        @org.openjdk.jmh.annotations.Benchmark
+        public void benchmark_readLong_byteBuff() throws java.lang.Throwable {
+            this.createImplementation();
+            this.runBenchmark(this.implementation()::readLong_byteBuff, this.description("readLong_byteBuff"));
+        }
+
+        @org.openjdk.jmh.annotations.Benchmark
+        public void benchmark_readLong_byteBuff_littleEndian() throws java.lang.Throwable {
+            this.createImplementation();
+            this.runBenchmark(this.implementation()::readLong_byteBuff_littleEndian, this.description("readLong_byteBuff_littleEndian"));
+        }
+
+        @org.openjdk.jmh.annotations.Benchmark
+        public void benchmark_readLongLe_bytes() throws java.lang.Throwable {
+            this.createImplementation();
+            this.runBenchmark(this.implementation()::readLongLe_bytes, this.description("readLongLe_bytes"));
+        }
+
+        @org.openjdk.jmh.annotations.Benchmark
+        public void benchmark_readLongLe_byteBuff() throws java.lang.Throwable {
+            this.createImplementation();
+            this.runBenchmark(this.implementation()::readLongLe_byteBuff, this.description("readLongLe_byteBuff"));
+        }
+
+        @org.openjdk.jmh.annotations.Benchmark
+        public void benchmark_readLongLe_byteBuff_littleEndian() throws java.lang.Throwable {
+            this.createImplementation();
+            this.runBenchmark(this.implementation()::readLongLe_byteBuff_littleEndian, this.description("readLongLe_byteBuff_littleEndian"));
+        }
+
+        @org.openjdk.jmh.annotations.Benchmark
+        public void benchmark_readVarint32_malformedTooBig() throws java.lang.Throwable {
+            this.createImplementation();
+            this.runBenchmark(this.implementation()::readVarint32_malformedTooBig, this.description("readVarint32_malformedTooBig"));
+        }
+
+        @org.openjdk.jmh.annotations.Benchmark
+        public void benchmark_readVarint64() throws java.lang.Throwable {
+            this.createImplementation();
+            this.runBenchmark(this.implementation()::readVarint64, this.description("readVarint64"));
+        }
+
+        @org.openjdk.jmh.annotations.Benchmark
+        public void benchmark_readVarint64_malformedTooBig() throws java.lang.Throwable {
+            this.createImplementation();
+            this.runBenchmark(this.implementation()::readVarint64_malformedTooBig, this.description("readVarint64_malformedTooBig"));
+        }
+
+        private ReadBufferTest implementation;
+
+        @java.lang.Override
+        public void createImplementation() throws java.lang.Throwable {
+            this.implementation = new ReadBufferTest();
+        }
+
+        @java.lang.Override
+        public ReadBufferTest implementation() {
+            return this.implementation;
+        }
+    }
 }

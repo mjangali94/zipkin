@@ -16,31 +16,25 @@ package zipkin2.internal;
 import org.junit.jupiter.api.Test;
 import zipkin2.TestObjects;
 import zipkin2.storage.InMemoryStorage;
-
 import static java.util.Arrays.asList;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class TracesAdapterTest {
-  InMemoryStorage storage = InMemoryStorage.newBuilder().build();
-  TracesAdapter adapter = new TracesAdapter(storage);
 
-  /**
-   * The contract for {@link zipkin2.storage.SpanStore#getTrace(java.lang.String)} is to return
-   * empty on not found. This ensures a list of results aren't padded with empty ones.
-   */
-  @Test void getTraces_doesntReturnEmptyElements() throws Exception {
-    storage.accept(TestObjects.TRACE).execute();
+    InMemoryStorage storage = InMemoryStorage.newBuilder().build();
 
-    assertThat(adapter.getTraces(asList()).execute())
-      .isEmpty();
+    TracesAdapter adapter = new TracesAdapter(storage);
 
-    assertThat(adapter.getTraces(asList("1")).execute())
-      .isEmpty();
-
-    assertThat(adapter.getTraces(asList("1", "2")).execute())
-      .isEmpty();
-
-    assertThat(adapter.getTraces(asList("1", TestObjects.TRACE.get(0).traceId(), "3")).execute())
-      .containsExactly(TestObjects.TRACE);
-  }
+    /**
+     * The contract for {@link zipkin2.storage.SpanStore#getTrace(java.lang.String)} is to return
+     * empty on not found. This ensures a list of results aren't padded with empty ones.
+     */
+    @Test
+    void getTraces_doesntReturnEmptyElements() throws Exception {
+        storage.accept(TestObjects.TRACE).execute();
+        assertThat(adapter.getTraces(asList()).execute()).isEmpty();
+        assertThat(adapter.getTraces(asList("1")).execute()).isEmpty();
+        assertThat(adapter.getTraces(asList("1", "2")).execute()).isEmpty();
+        assertThat(adapter.getTraces(asList("1", TestObjects.TRACE.get(0).traceId(), "3")).execute()).containsExactly(TestObjects.TRACE);
+    }
 }
