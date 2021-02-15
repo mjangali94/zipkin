@@ -20,7 +20,7 @@ public final class JsonEscaper {
     if (length == 0) return v;
 
     int afterReplacement = 0;
-    StringBuilder builder = null;
+    StringBuffer builder = null;
     for (int i = 0; i < length; i++) {
       char c = v.charAt(i);
       String replacement;
@@ -35,10 +35,10 @@ public final class JsonEscaper {
         continue;
       }
       if (afterReplacement < i) { // write characters between the last replacement and now
-        if (builder == null) builder = new StringBuilder(length);
+        if (builder == null) builder = new StringBuffer(length);
         builder.append(v, afterReplacement, i);
       }
-      if (builder == null) builder = new StringBuilder(length);
+      if (builder == null) builder = new StringBuffer(length);
       builder.append(replacement);
       afterReplacement = i + 1;
     }

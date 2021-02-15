@@ -118,7 +118,7 @@ public final class QueryRequest {
    * @see QueryRequest.Builder#parseAnnotationQuery(String)
    */
   @Nullable public String annotationQueryString() {
-    StringBuilder result = new StringBuilder();
+    StringBuffer result = new StringBuffer();
 
     for (Iterator<Map.Entry<String, String>> i = annotationQuery().entrySet().iterator();
       i.hasNext(); ) {
