@@ -44,8 +44,10 @@ final class Proto3SpanWriter implements WriteBuffer.Writer<Span> {
 
     int sizeInBytes = 0;
     int[] sizeOfValues = new int[lengthOfSpans];
-    for (int i = 0; i < lengthOfSpans; i++) {
-      int sizeOfValue = sizeOfValues[i] = SPAN.sizeOfValue(spans.get(i));
+    int j=-1;
+    for (Span tmp:spans) {
+        j++;
+      int sizeOfValue = sizeOfValues[j] = SPAN.sizeOfValue(spans.get(j));
       sizeInBytes += sizeOfLengthDelimitedField(sizeOfValue);
     }
     byte[] result = new byte[sizeInBytes];

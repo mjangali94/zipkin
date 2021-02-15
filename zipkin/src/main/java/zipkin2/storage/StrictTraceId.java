@@ -73,8 +73,8 @@ public final class StrictTraceId {
     // is query side, which is not in the critical path of user code. A set is much easier to grok.
     Set<String> traceIdLows = new LinkedHashSet<String>();
     boolean clash = false;
-    for (int i = 0; i < traceCount; i++) {
-      String traceId = lowerTraceId(input.get(i).get(0).traceId());
+    for (List<Span> tmp:input) {
+      String traceId = lowerTraceId(tmp.get(0).traceId());
       if (!traceIdLows.add(traceId)) {
         clash = true;
         break;

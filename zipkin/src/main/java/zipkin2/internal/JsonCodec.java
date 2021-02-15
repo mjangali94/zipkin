@@ -156,8 +156,8 @@ public final class JsonCodec {
     int length = value.size();
     int sizeInBytes = 2; // []
     if (length > 1) sizeInBytes += length - 1; // comma to join elements
-    for (int i = 0; i < length; i++) {
-      sizeInBytes += writer.sizeInBytes(value.get(i));
+    for (T tmp:value) {
+      sizeInBytes += writer.sizeInBytes(tmp);
     }
     return sizeInBytes;
   }

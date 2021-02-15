@@ -155,8 +155,8 @@ public final class SpanNode {
       if (logger.isLoggable(FINE)) logger.fine("building trace tree: traceId=" + traceId);
 
       // Next, index all the spans so that we can understand any relationships.
-      for (int i = 0; i < length; i++) {
-        index(cleaned.get(i));
+      for (Span tmp:cleaned) {
+        index(tmp);
       }
 
       // Now that we've index references to all spans, we can revise any parent-child relationships.

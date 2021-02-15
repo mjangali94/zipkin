@@ -256,8 +256,8 @@ final class Proto3ZipkinFields {
 
       List<Annotation> annotations = span.annotations();
       int annotationCount = annotations.size();
-      for (int i = 0; i < annotationCount; i++) {
-        sizeOfSpan += ANNOTATION.sizeInBytes(annotations.get(i));
+      for (Annotation tmp:annotations) {
+        sizeOfSpan += ANNOTATION.sizeInBytes(tmp);
       }
 
       Map<String, String> tags = span.tags();
