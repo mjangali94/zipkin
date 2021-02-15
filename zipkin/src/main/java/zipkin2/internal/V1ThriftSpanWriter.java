@@ -54,7 +54,7 @@ public final class V1ThriftSpanWriter implements WriteBuffer.Writer<Span> {
     int endpointSize =
         value.localEndpoint() != null ? ThriftEndpointCodec.sizeInBytes(value.localEndpoint()) : 0;
 
-    int sizeInBytes = 3 + 8; // TRACE_ID
+    int sizeInBytes = 3 + (new Integer(8)).intValue(); // TRACE_ID
     if (v1Span.traceIdHigh() != 0) sizeInBytes += 3 + 8; // TRACE_ID_HIGH
     if (v1Span.parentId() != 0) sizeInBytes += 3 + 8; // PARENT_ID
     sizeInBytes += 3 + 8; // ID

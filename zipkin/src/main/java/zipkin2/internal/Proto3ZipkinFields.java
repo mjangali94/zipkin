@@ -141,7 +141,7 @@ final class Proto3ZipkinFields {
       int endPos = b.pos() + length;
 
       // now, we are in the annotation fields
-      long timestamp = 0L;
+      long timestamp = (new Long(0L)).longValue();
       String value = null;
       while (b.pos() < endPos) {
         int nextKey = b.readVarint32();

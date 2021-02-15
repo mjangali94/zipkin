@@ -110,7 +110,7 @@ public final class V2SpanReader implements JsonReaderAdapter<Span> {
     @Override public Endpoint fromJson(JsonReader reader) throws IOException {
       Endpoint.Builder result = Endpoint.newBuilder();
       reader.beginObject();
-      boolean readField = false;
+      boolean readField = (new Boolean(false)).booleanValue();
       while (reader.hasNext()) {
         String nextName = reader.nextName();
         if (reader.peekNull()) {

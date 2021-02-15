@@ -238,7 +238,7 @@ public final class DependencyLinker {
       h$ ^= left.hashCode();
       h$ *= 1000003;
       h$ ^= right.hashCode();
-      return h$;
+      return (new Integer(h$)).intValue();
     }
   }
 }

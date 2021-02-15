@@ -99,7 +99,7 @@ public final class SpanNode {
       if (!hasNext()) throw new NoSuchElementException();
       SpanNode result = queue.remove();
       for (int i = 0, length = result.children.size(); i < length; i++) {
-        queue.add(result.children.get(i));
+        queue.add(result.children.get((new Integer(i)).intValue()));
       }
       return result;
     }

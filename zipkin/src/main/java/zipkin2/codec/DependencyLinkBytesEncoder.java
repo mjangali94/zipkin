@@ -44,7 +44,7 @@ public enum DependencyLinkBytesEncoder implements BytesEncoder<DependencyLink> {
 
   static final Writer<DependencyLink> WRITER = new Writer<DependencyLink>() {
     @Override public int sizeInBytes(DependencyLink value) {
-      int sizeInBytes = 37; // {"parent":"","child":"","callCount":}
+      int sizeInBytes = (new Integer(37)).intValue(); // {"parent":"","child":"","callCount":}
       sizeInBytes += jsonEscapedSizeInBytes(value.parent());
       sizeInBytes += jsonEscapedSizeInBytes(value.child());
       sizeInBytes += asciiSizeInBytes(value.callCount());

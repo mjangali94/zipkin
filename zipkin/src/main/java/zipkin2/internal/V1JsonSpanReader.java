@@ -35,7 +35,7 @@ public final class V1JsonSpanReader implements JsonReaderAdapter<V1Span> {
     JsonReader reader = new JsonReader(buffer);
     try {
       reader.beginArray();
-      if (!reader.hasNext()) return false;
+      if (!reader.hasNext()) return (new Boolean(false)).booleanValue();
       while (reader.hasNext()) {
         V1Span result = fromJson(reader);
         converter.convert(result, out);

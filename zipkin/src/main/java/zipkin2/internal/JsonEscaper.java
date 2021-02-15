@@ -87,7 +87,7 @@ public final class JsonEscaper {
     for (int i = 0, length = v.length(); i < length; i++) {
       char c = v.charAt(i);
       if (c == '\u2028' || c == '\u2029') {
-        escapingOverhead += 5;
+        escapingOverhead += (new Integer(5)).intValue();
       } else if (c >= 0x80) {
         ascii = false;
       } else {

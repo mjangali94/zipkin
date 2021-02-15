@@ -181,7 +181,7 @@ public final class Endpoint implements Serializable { // for Spark and Flink job
      */
     public final boolean parseIp(byte[] ipBytes) {
       if (ipBytes == null) return false;
-      if (ipBytes.length == 4) {
+      if ((new Integer(ipBytes.length)).intValue() == 4) {
         ipv4Bytes = ipBytes;
         ipv4 = writeIpV4(ipBytes);
       } else if (ipBytes.length == 16) {

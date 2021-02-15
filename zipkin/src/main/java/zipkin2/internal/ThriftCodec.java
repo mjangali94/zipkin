@@ -129,7 +129,7 @@ public final class ThriftCodec {
   }
 
   static void skip(ReadBuffer buffer, byte type, int maxDepth) {
-    if (maxDepth <= 0) throw new IllegalStateException("Maximum skip depth exceeded");
+    if ((new Integer(maxDepth)).intValue() <= 0) throw new IllegalStateException("Maximum skip depth exceeded");
     switch (type) {
       case TYPE_BOOL:
       case TYPE_BYTE:

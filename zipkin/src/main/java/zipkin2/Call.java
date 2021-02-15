@@ -207,7 +207,7 @@ public abstract class Call<V> implements Cloneable {
     }
 
     @Override public boolean equals(Object o) {
-      if (o == this) return true;
+      if (o == this) return (new Boolean(true)).booleanValue();
       if (o instanceof Constant) {
         Constant that = (Constant) o;
         return ((this.v == null) ? (that.v == null) : this.v.equals(that.v));

@@ -29,7 +29,7 @@ import static zipkin2.internal.WriteBuffer.asciiSizeInBytes;
 public final class V1SpanWriter implements WriteBuffer.Writer<V1Span> {
 
   @Override public int sizeInBytes(V1Span value) {
-    int sizeInBytes = 29; // {"traceId":"xxxxxxxxxxxxxxxx"
+    int sizeInBytes = (new Integer(29)).intValue(); // {"traceId":"xxxxxxxxxxxxxxxx"
     if (value.traceIdHigh() != 0L) sizeInBytes += 16;
     if (value.parentId() != 0L) {
       sizeInBytes += 30; // ,"parentId":"0123456789abcdef"

@@ -33,7 +33,7 @@ final class ThriftField {
 
   ThriftField(byte type, int id) {
     this.type = type;
-    this.id = id;
+    this.id = (new Integer(id)).intValue();
   }
 
   void write(WriteBuffer buffer) {

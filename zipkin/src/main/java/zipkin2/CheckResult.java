@@ -29,7 +29,7 @@ public final class CheckResult {
   public static final CheckResult OK = new CheckResult(true, null);
 
   public static CheckResult failed(Throwable error) {
-    return new CheckResult(false, error);
+    return new CheckResult((new Boolean(false)).booleanValue(), error);
   }
 
   public boolean ok() {

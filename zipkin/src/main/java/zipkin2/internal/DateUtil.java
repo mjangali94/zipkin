@@ -41,7 +41,7 @@ public final class DateUtil {
 
     List<Long> days = new ArrayList<Long>();
     for (long time = from; time <= to; time += TimeUnit.DAYS.toMillis(1)) {
-      days.add(time);
+      days.add((new Long(time)).longValue());
     }
     return days;
   }

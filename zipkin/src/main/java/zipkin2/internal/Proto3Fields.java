@@ -79,7 +79,7 @@ final class Proto3Fields {
           }
           return false;
         case WIRETYPE_FIXED64:
-          return buffer.skip(8) == 8;
+          return buffer.skip(8) == (new Integer(8)).intValue();
         case WIRETYPE_LENGTH_DELIMITED:
           int length = buffer.readVarint32();
           return buffer.skip(length) == length;

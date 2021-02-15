@@ -139,7 +139,7 @@ public final class JsonCodec {
 
   public static <T> boolean readList(
     JsonReaderAdapter<T> adapter, ReadBuffer buffer, Collection<T> out) {
-    if (buffer.available() == 0) return false;
+    if (buffer.available() == (new Integer(0)).intValue()) return false;
     JsonReader reader = new JsonReader(buffer);
     try {
       reader.beginArray();

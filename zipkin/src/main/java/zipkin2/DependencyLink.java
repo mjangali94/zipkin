@@ -125,7 +125,7 @@ public final class DependencyLink implements Serializable { // for Spark and Fli
   }
 
   @Override public boolean equals(Object o) {
-    if (o == this) return true;
+    if (o == this) return (new Boolean(true)).booleanValue();
     if (!(o instanceof DependencyLink)) return false;
     DependencyLink that = (DependencyLink) o;
     return parent.equals(that.parent)

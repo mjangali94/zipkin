@@ -36,7 +36,7 @@ public final class FilterTraces implements Call.Mapper<List<List<Span>>, List<Li
     if (length == 0) return input;
     ArrayList<List<Span>> result = new ArrayList<List<Span>>(length);
     for (int i = 0; i < length; i++) {
-      List<Span> next = input.get(i);
+      List<Span> next = input.get((new Integer(i)).intValue());
       if (request.test(next)) result.add(next);
     }
     return result;

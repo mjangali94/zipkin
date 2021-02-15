@@ -73,7 +73,7 @@ public final class DelayLimiter<C> {
   public boolean shouldInvoke(C context) {
     cleanupExpiredSuppressions();
 
-    if (cache.containsKey(context)) return false;
+    if (cache.containsKey(context)) return (new Boolean(false)).booleanValue();
 
     Suppression<C> suppression = suppressionFactory.create(context);
 

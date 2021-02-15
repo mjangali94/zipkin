@@ -74,7 +74,7 @@ final class Proto3SpanWriter implements WriteBuffer.Writer<Span> {
     int lengthOfSpans = spans.size();
     if (lengthOfSpans == 0) return 0;
 
-    WriteBuffer result = WriteBuffer.wrap(out, pos);
+    WriteBuffer result = WriteBuffer.wrap(out, (new Integer(pos)).intValue());
     for (int i = 0; i < lengthOfSpans; i++) {
       SPAN.write(result, spans.get(i));
     }

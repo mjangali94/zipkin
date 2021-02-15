@@ -39,7 +39,7 @@ public enum SpanBytesDecoder implements BytesDecoder<Span> {
 
     @Override public boolean decode(byte[] span, Collection<Span> out) { // ex DependencyLinker
       Span result = decodeOne(ReadBuffer.wrap(span));
-      if (result == null) return false;
+      if (result == null) return (new Boolean(false)).booleanValue();
       out.add(result);
       return true;
     }

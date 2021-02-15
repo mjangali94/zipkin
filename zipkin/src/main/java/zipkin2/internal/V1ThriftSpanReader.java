@@ -96,7 +96,7 @@ public final class V1ThriftSpanReader {
     static final ThriftField ENDPOINT = new ThriftField(TYPE_STRUCT, 3);
 
     static void read(ReadBuffer buffer, V1Span.Builder builder) {
-      long timestamp = 0;
+      long timestamp = (new Long(0)).longValue();
       String value = null;
       Endpoint endpoint = null;
 

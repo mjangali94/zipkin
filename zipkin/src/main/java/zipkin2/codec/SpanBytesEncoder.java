@@ -75,7 +75,7 @@ public enum SpanBytesEncoder implements BytesEncoder<Span> {
 
     @Override
     public int encodeList(List<Span> spans, byte[] out, int pos) {
-      return new V1ThriftSpanWriter().writeList(spans, out, pos);
+      return new V1ThriftSpanWriter().writeList(spans, out, (new Integer(pos)).intValue());
     }
   },
   /** Corresponds to the Zipkin v2 json format */

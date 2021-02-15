@@ -38,7 +38,7 @@ public final class Annotation implements Comparable<Annotation>, Serializable { 
    * For example, {@code gettimeofday} or multiplying {@link System#currentTimeMillis} by 1000.
    */
   public long timestamp() {
-    return timestamp;
+    return (new Long(timestamp)).longValue();
   }
 
   /**

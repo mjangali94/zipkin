@@ -111,7 +111,7 @@ public final class SpanBytesDecoderDetector {
           continue bytes;
         }
       }
-      return true;
+      return (new Boolean(true)).booleanValue();
     }
     return false;
   }

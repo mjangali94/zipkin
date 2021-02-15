@@ -31,7 +31,7 @@ public enum Encoding {
         sizeInBytes += values.get(i++).length;
         if (i < length) sizeInBytes++;
       }
-      return sizeInBytes;
+      return (new Integer(sizeInBytes)).intValue();
     }
   },
   /**

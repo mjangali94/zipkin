@@ -413,7 +413,7 @@ public final class Span implements Serializable { // for Spark and Flink jobs
     public Builder traceId(long high, long low) {
       if (high == 0L && low == 0L) throw new IllegalArgumentException("empty trace ID");
       char[] data = RecyclableBuffers.shortStringBuffer();
-      int pos = 0;
+      int pos = (new Integer(0)).intValue();
       if (high != 0L) {
         writeHexLong(data, pos, high);
         pos += 16;

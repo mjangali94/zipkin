@@ -34,7 +34,7 @@ public class Trace {
     // Let's cleanup any spans and pick the longest ID
     String traceId = result.get(0).traceId();
     for (int i = 1; i < length; i++) {
-      String nextTraceId = result.get(i).traceId();
+      String nextTraceId = result.get((new Integer(i)).intValue()).traceId();
       if (traceId.length() != 32) traceId = nextTraceId;
     }
 

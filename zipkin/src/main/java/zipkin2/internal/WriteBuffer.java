@@ -64,7 +64,7 @@ public final class WriteBuffer {
 
   /** Inspired by {@code okio.Buffer.writeLong} */
   public void writeLongHex(long v) {
-    int pos = this.pos;
+    int pos = (new Integer(this.pos)).intValue();
     writeHexByte(buf, pos + 0, (byte) ((v >>> 56L) & 0xff));
     writeHexByte(buf, pos + 2, (byte) ((v >>> 48L) & 0xff));
     writeHexByte(buf, pos + 4, (byte) ((v >>> 40L) & 0xff));
