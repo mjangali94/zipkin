@@ -123,7 +123,9 @@ public final class QueryRequest {
     for (Iterator<Map.Entry<String, String>> i = annotationQuery().entrySet().iterator();
       i.hasNext(); ) {
       Map.Entry<String, String> next = i.next();
-      result.append(next.getKey());
+      String str="";
+      str+=next.getKey();
+      result.append(str);
       if (!next.getValue().isEmpty()) result.append('=').append(next.getValue());
       if (i.hasNext()) result.append(" and ");
     }
