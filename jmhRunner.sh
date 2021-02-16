@@ -1,7 +1,7 @@
 cd zipkin
 git checkout -f JUnit2JMH
 git pull
-mvn clean install -Dlicense.skip=true -DskipTests 
+mvn clean compile -Dlicense.skip=true -DskipTests 
 cd zipkin-tests/
 mvn -Dlicense.skip=true -Dlicense.skip=true -Dtest=zipkin2.internal.DependencyLinkerTest test > ../../myResult/zipkin2.internal.DependencyLinkerTest_BEFORE.txt
 mvn -Dlicense.skip=true -Dlicense.skip=true -Dtest=zipkin2.codec.SpanBytesDecoderTest test > ../../myResult/zipkin2.codec.SpanBytesDecoderTest_BEFORE.txt
@@ -15,7 +15,7 @@ mvn -Dlicense.skip=true -Dlicense.skip=true -Dtest=zipkin2.internal.JsonCodecTes
 cd ../
 git checkout -f PMT-PTW
 git pull
-mvn clean install -Dlicense.skip=true -DskipTests 
+mvn clean compile -Dlicense.skip=true -DskipTests 
 cd zipkin-tests/
 mvn -Dlicense.skip=true -Dlicense.skip=true -Dtest=zipkin2.internal.DependencyLinkerTest test > ../../myResult/zipkin2.internal.DependencyLinkerTest_AFTER.txt
 mvn -Dlicense.skip=true -Dlicense.skip=true -Dtest=zipkin2.codec.SpanBytesDecoderTest test > ../../myResult/zipkin2.codec.SpanBytesDecoderTest_AFTER.txt
@@ -29,7 +29,7 @@ mvn -Dlicense.skip=true -Dlicense.skip=true -Dtest=zipkin2.internal.JsonCodecTes
 cd ../
 git checkout -f JUnit2JMH
 git pull
-mvn clean install -Dlicense.skip=true -DskipTests 
+mvn clean compile -Dlicense.skip=true -DskipTests 
 cd zipkin-tests/
 mvn -Dlicense.skip=true -Dlicense.skip=true -Dtest=zipkin2.internal.JsonEscaperTest test > ../../myResult/zipkin2.internal.JsonEscaperTest_BEFORE.txt
 mvn -Dlicense.skip=true -Dlicense.skip=true -Dtest=zipkin2.internal.Proto3FieldsTest test > ../../myResult/zipkin2.internal.Proto3FieldsTest_BEFORE.txt
@@ -44,7 +44,7 @@ mvn -Dlicense.skip=true -Dlicense.skip=true -Dtest=zipkin2.internal.WriteBufferT
 cd ../
 git checkout -f PMT-PTW
 git pull
-mvn clean install -Dlicense.skip=true -DskipTests 
+mvn clean compile -Dlicense.skip=true -DskipTests 
 cd zipkin-tests/
 mvn -Dlicense.skip=true -Dlicense.skip=true -Dtest=zipkin2.internal.JsonEscaperTest test > ../../myResult/zipkin2.internal.JsonEscaperTest_AFTER.txt
 mvn -Dlicense.skip=true -Dlicense.skip=true -Dtest=zipkin2.internal.Proto3FieldsTest test > ../../myResult/zipkin2.internal.Proto3FieldsTest_AFTER.txt
@@ -59,7 +59,7 @@ mvn -Dlicense.skip=true -Dlicense.skip=true -Dtest=zipkin2.internal.WriteBufferT
 cd ../
 git checkout -f master
 git pull
-mvn clean install -Dlicense.skip=true -DskipTests 
+mvn clean compile -Dlicense.skip=true -DskipTests 
 cd benchmarks/
 mvn package
 cd target
@@ -95,7 +95,7 @@ java -jar benchmarks.jar zipkin2.internal.ReadBufferBenchmarks.readLong_localArr
 cd ../../
 git checkout -f PMT-PTW
 git pull
-mvn clean install -Dlicense.skip=true -DskipTests 
+mvn clean compile -Dlicense.skip=true -DskipTests 
 cd benchmarks/
 mvn package
 cd target
