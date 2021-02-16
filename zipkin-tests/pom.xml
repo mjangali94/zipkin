@@ -176,7 +176,12 @@
                 <argument>-classpath</argument>
                 <classpath />
                 <argument>org.openjdk.jmh.Main</argument>
-                <argument>zipkin2.*</argument>
+                <argument>zipkin2.storage.StrictTraceIdTest.*</argument>
+                <argument>zipkin2.internal.SpanNodeTest.*</argument>
+                <argument>zipkin2.internal.Proto3ZipkinFieldsTest.*</argument>
+                <argument>zipkin2.internal.Proto3SpanWriterTest.*</argument>
+                <argument>zipkin2.internal.JsonCodecTest.*</argument>
+                <argument>zipkin2.internal.FilterTracesTest.*</argument>
               </arguments>
             </configuration>
           </execution>
