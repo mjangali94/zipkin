@@ -1,4 +1,4 @@
-cd eclipse-collections/
+cd zipkin
 git checkout -f JUnit2JMH
 git pull
 mvn clean install -Dlicense.skip=true -DskipTests 
