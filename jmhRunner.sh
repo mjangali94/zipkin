@@ -3,59 +3,13 @@ git checkout -f JUnit2JMH
 git pull
 mvn clean compile -Dlicense.skip=true -DskipTests 
 cd zipkin-tests/
-mvn -Dlicense.skip=true -Dlicense.skip=true -Dtest=zipkin2.internal.DependencyLinkerTest test > ../../myResult/zipkin2.internal.DependencyLinkerTest_BEFORE.txt
-mvn -Dlicense.skip=true -Dlicense.skip=true -Dtest=zipkin2.codec.SpanBytesDecoderTest test > ../../myResult/zipkin2.codec.SpanBytesDecoderTest_BEFORE.txt
-mvn -Dlicense.skip=true -Dlicense.skip=true -Dtest=zipkin2.AnnotationTest test > ../../myResult/zipkin2.AnnotationTest_BEFORE.txt
-mvn -Dlicense.skip=true -Dlicense.skip=true -Dtest=zipkin2.EndpointTest test > ../../myResult/zipkin2.EndpointTest_BEFORE.txt
-mvn -Dlicense.skip=true -Dlicense.skip=true -Dtest=zipkin2.codec.SpanBytesEncoderTest test > ../../myResult/zipkin2.codec.SpanBytesEncoderTest_BEFORE.txt
-mvn -Dlicense.skip=true -Dlicense.skip=true -Dtest=zipkin2.SpanTest test > ../../myResult/zipkin2.SpanTest_BEFORE.txt
-mvn -Dlicense.skip=true -Dlicense.skip=true -Dtest=zipkin2.CallTest test > ../../myResult/zipkin2.CallTest_BEFORE.txt
-mvn -Dlicense.skip=true -Dlicense.skip=true -Dtest=zipkin2.internal.FilterTracesTest test > ../../myResult/zipkin2.internal.FilterTracesTest_BEFORE.txt
-mvn -Dlicense.skip=true -Dlicense.skip=true -Dtest=zipkin2.internal.JsonCodecTest test > ../../myResult/zipkin2.internal.JsonCodecTest_BEFORE.txt
+mvn clean install -Dlicense.skip=true >> ../../myResult/junit_BEFORE.txt
 cd ../
 git checkout -f PMT-PTW
 git pull
 mvn clean compile -Dlicense.skip=true -DskipTests 
 cd zipkin-tests/
-mvn -Dlicense.skip=true -Dlicense.skip=true -Dtest=zipkin2.internal.DependencyLinkerTest test > ../../myResult/zipkin2.internal.DependencyLinkerTest_AFTER.txt
-mvn -Dlicense.skip=true -Dlicense.skip=true -Dtest=zipkin2.codec.SpanBytesDecoderTest test > ../../myResult/zipkin2.codec.SpanBytesDecoderTest_AFTER.txt
-mvn -Dlicense.skip=true -Dlicense.skip=true -Dtest=zipkin2.AnnotationTest test > ../../myResult/zipkin2.AnnotationTest_AFTER.txt
-mvn -Dlicense.skip=true -Dlicense.skip=true -Dtest=zipkin2.EndpointTest test > ../../myResult/zipkin2.EndpointTest_AFTER.txt
-mvn -Dlicense.skip=true -Dlicense.skip=true -Dtest=zipkin2.codec.SpanBytesEncoderTest test > ../../myResult/zipkin2.codec.SpanBytesEncoderTest_AFTER.txt
-mvn -Dlicense.skip=true -Dlicense.skip=true -Dtest=zipkin2.SpanTest test > ../../myResult/zipkin2.SpanTest_AFTER.txt
-mvn -Dlicense.skip=true -Dlicense.skip=true -Dtest=zipkin2.CallTest test > ../../myResult/zipkin2.CallTest_AFTER.txt
-mvn -Dlicense.skip=true -Dlicense.skip=true -Dtest=zipkin2.internal.FilterTracesTest test > ../../myResult/zipkin2.internal.FilterTracesTest_AFTER.txt
-mvn -Dlicense.skip=true -Dlicense.skip=true -Dtest=zipkin2.internal.JsonCodecTest test > ../../myResult/zipkin2.internal.JsonCodecTest_AFTER.txt
-cd ../
-git checkout -f JUnit2JMH
-git pull
-mvn clean compile -Dlicense.skip=true -DskipTests 
-cd zipkin-tests/
-mvn -Dlicense.skip=true -Dlicense.skip=true -Dtest=zipkin2.internal.JsonEscaperTest test > ../../myResult/zipkin2.internal.JsonEscaperTest_BEFORE.txt
-mvn -Dlicense.skip=true -Dlicense.skip=true -Dtest=zipkin2.internal.Proto3FieldsTest test > ../../myResult/zipkin2.internal.Proto3FieldsTest_BEFORE.txt
-mvn -Dlicense.skip=true -Dlicense.skip=true -Dtest=zipkin2.internal.Proto3SpanWriterTest test > ../../myResult/zipkin2.internal.Proto3SpanWriterTest_BEFORE.txt
-mvn -Dlicense.skip=true -Dlicense.skip=true -Dtest=zipkin2.internal.Proto3ZipkinFieldsTest test > ../../myResult/zipkin2.internal.Proto3ZipkinFieldsTest_BEFORE.txt
-mvn -Dlicense.skip=true -Dlicense.skip=true -Dtest=zipkin2.internal.SpanNodeTest test > ../../myResult/zipkin2.internal.SpanNodeTest_BEFORE.txt
-mvn -Dlicense.skip=true -Dlicense.skip=true -Dtest=zipkin2.internal.TraceTest test > ../../myResult/zipkin2.internal.TraceTest_BEFORE.txt
-mvn -Dlicense.skip=true -Dlicense.skip=true -Dtest=zipkin2.internal.V1JsonSpanWriterTest test > ../../myResult/zipkin2.internal.V1JsonSpanWriterTest_BEFORE.txt
-mvn -Dlicense.skip=true -Dlicense.skip=true -Dtest=zipkin2.internal.V1ThriftSpanWriterTest test > ../../myResult/zipkin2.internal.V1ThriftSpanWriterTest_BEFORE.txt
-mvn -Dlicense.skip=true -Dlicense.skip=true -Dtest=zipkin2.internal.V2SpanWriterTest test > ../../myResult/zipkin2.internal.V2SpanWriterTest_BEFORE.txt
-mvn -Dlicense.skip=true -Dlicense.skip=true -Dtest=zipkin2.internal.WriteBufferTest test > ../../myResult/zipkin2.internal.WriteBufferTest_BEFORE.txt
-cd ../
-git checkout -f PMT-PTW
-git pull
-mvn clean compile -Dlicense.skip=true -DskipTests 
-cd zipkin-tests/
-mvn -Dlicense.skip=true -Dlicense.skip=true -Dtest=zipkin2.internal.JsonEscaperTest test > ../../myResult/zipkin2.internal.JsonEscaperTest_AFTER.txt
-mvn -Dlicense.skip=true -Dlicense.skip=true -Dtest=zipkin2.internal.Proto3FieldsTest test > ../../myResult/zipkin2.internal.Proto3FieldsTest_AFTER.txt
-mvn -Dlicense.skip=true -Dlicense.skip=true -Dtest=zipkin2.internal.Proto3SpanWriterTest test > ../../myResult/zipkin2.internal.Proto3SpanWriterTest_AFTER.txt
-mvn -Dlicense.skip=true -Dlicense.skip=true -Dtest=zipkin2.internal.Proto3ZipkinFieldsTest test > ../../myResult/zipkin2.internal.Proto3ZipkinFieldsTest_AFTER.txt
-mvn -Dlicense.skip=true -Dlicense.skip=true -Dtest=zipkin2.internal.SpanNodeTest test > ../../myResult/zipkin2.internal.SpanNodeTest_AFTER.txt
-mvn -Dlicense.skip=true -Dlicense.skip=true -Dtest=zipkin2.internal.TraceTest test > ../../myResult/zipkin2.internal.TraceTest_AFTER.txt
-mvn -Dlicense.skip=true -Dlicense.skip=true -Dtest=zipkin2.internal.V1JsonSpanWriterTest test > ../../myResult/zipkin2.internal.V1JsonSpanWriterTest_AFTER.txt
-mvn -Dlicense.skip=true -Dlicense.skip=true -Dtest=zipkin2.internal.V1ThriftSpanWriterTest test > ../../myResult/zipkin2.internal.V1ThriftSpanWriterTest_AFTER.txt
-mvn -Dlicense.skip=true -Dlicense.skip=true -Dtest=zipkin2.internal.V2SpanWriterTest test > ../../myResult/zipkin2.internal.V2SpanWriterTest_AFTER.txt
-mvn -Dlicense.skip=true -Dlicense.skip=true -Dtest=zipkin2.internal.WriteBufferTest test > ../../myResult/zipkin2.internal.WriteBufferTest_AFTER.txt
+mvn clean install -Dlicense.skip=true >> ../../myResult/junit_AFTER.txt
 cd ../
 git checkout -f master
 git pull
