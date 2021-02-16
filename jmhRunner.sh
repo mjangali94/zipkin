@@ -1,7 +1,7 @@
 cd zipkin
 git checkout -f JUnit2JMH
 git pull
-mvn clean install -Dlicense.skip=true -DskipTests 
+mvn clean install -DskipTests 
 cd unit-tests/
 mvn -Dtest=zipkin2.internal.DependencyLinkerTest test > ../../myResult/zipkin2.internal.DependencyLinkerTest_BEFORE.txt
 mvn -Dtest=zipkin2.codec.SpanBytesDecoderTest test > ../../myResult/zipkin2.codec.SpanBytesDecoderTest_BEFORE.txt
@@ -15,7 +15,7 @@ mvn -Dtest=zipkin2.internal.JsonCodecTest test > ../../myResult/zipkin2.internal
 cd ../
 git checkout -f PMT-PTW
 git pull
-mvn clean install -Dlicense.skip=true -DskipTests 
+mvn clean install -DskipTests 
 cd unit-tests/
 mvn -Dtest=zipkin2.internal.DependencyLinkerTest test > ../../myResult/zipkin2.internal.DependencyLinkerTest_AFTER.txt
 mvn -Dtest=zipkin2.codec.SpanBytesDecoderTest test > ../../myResult/zipkin2.codec.SpanBytesDecoderTest_AFTER.txt
@@ -29,7 +29,7 @@ mvn -Dtest=zipkin2.internal.JsonCodecTest test > ../../myResult/zipkin2.internal
 cd ../
 git checkout -f JUnit2JMH
 git pull
-mvn clean install -Dlicense.skip=true -DskipTests 
+mvn clean install -DskipTests 
 cd unit-tests/
 mvn -Dtest=zipkin2.internal.JsonEscaperTest test > ../../myResult/zipkin2.internal.JsonEscaperTest_BEFORE.txt
 mvn -Dtest=zipkin2.internal.Proto3FieldsTest test > ../../myResult/zipkin2.internal.Proto3FieldsTest_BEFORE.txt
@@ -44,7 +44,7 @@ mvn -Dtest=zipkin2.internal.WriteBufferTest test > ../../myResult/zipkin2.intern
 cd ../
 git checkout -f PMT-PTW
 git pull
-mvn clean install -Dlicense.skip=true -DskipTests 
+mvn clean install -DskipTests 
 cd unit-tests/
 mvn -Dtest=zipkin2.internal.JsonEscaperTest test > ../../myResult/zipkin2.internal.JsonEscaperTest_AFTER.txt
 mvn -Dtest=zipkin2.internal.Proto3FieldsTest test > ../../myResult/zipkin2.internal.Proto3FieldsTest_AFTER.txt
@@ -59,9 +59,9 @@ mvn -Dtest=zipkin2.internal.WriteBufferTest test > ../../myResult/zipkin2.intern
 cd ../
 git checkout -f master
 git pull
-mvn clean install -Dlicense.skip=true -DskipTests 
+mvn clean install -DskipTests 
 cd benchmarks/
-mvn package -Dlicense.skip=true
+mvn package
 cd target
 java -jar benchmarks.jar zipkin2.internal.WriteBufferBenchmarks.utf8SizeInBytes_chinese -bm thrpt -wi 10 -i 30 -f 1 -tu s -w 1 -r 1 -rf json -rff ../../myResult/zipkin2.internal.WriteBufferBenchmarks.utf8SizeInBytes_chinese_BEFORE.json
 java -jar benchmarks.jar zipkin2.internal.WriteBufferBenchmarks.varIntSizeInBytes_32 -bm thrpt -wi 10 -i 30 -f 1 -tu s -w 1 -r 1 -rf json -rff ../../myResult/zipkin2.internal.WriteBufferBenchmarks.varIntSizeInBytes_32_BEFORE.json
@@ -95,9 +95,9 @@ java -jar benchmarks.jar zipkin2.internal.ReadBufferBenchmarks.readLong_localArr
 cd ../../
 git checkout -f PMT-PTW
 git pull
-mvn clean install -Dlicense.skip=true -DskipTests 
+mvn clean install -DskipTests 
 cd benchmarks/
-mvn package -Dlicense.skip=true
+mvn package
 cd target
 java -jar benchmarks.jar zipkin2.internal.WriteBufferBenchmarks.utf8SizeInBytes_chinese -bm thrpt -wi 10 -i 30 -f 1 -tu s -w 1 -r 1 -rf json -rff ../../myResult/zipkin2.internal.WriteBufferBenchmarks.utf8SizeInBytes_chinese_AFTER.json
 java -jar benchmarks.jar zipkin2.internal.WriteBufferBenchmarks.varIntSizeInBytes_32 -bm thrpt -wi 10 -i 30 -f 1 -tu s -w 1 -r 1 -rf json -rff ../../myResult/zipkin2.internal.WriteBufferBenchmarks.varIntSizeInBytes_32_AFTER.json
