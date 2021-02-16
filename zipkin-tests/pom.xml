@@ -176,7 +176,8 @@
                 <argument>-classpath</argument>
                 <classpath />
                 <argument>org.openjdk.jmh.Main</argument>
-                <argument>zipkin2.*</argument>
+                <argument>zipkin2.internal.JsonEscaper.*</argument>
+                <argument>zipkin2.storage.QueryRequest.*</argument>
               </arguments>
             </configuration>
           </execution>
